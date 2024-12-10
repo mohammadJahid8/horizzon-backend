@@ -1,0 +1,73 @@
+{
+  "personalInformation": {
+      "bio": "not Experienced software developer specializing in web applications.",
+      "dateOfBirth": "1990-05-15T00:00:00Z",
+      "gender": "male",
+      "address": {
+          "street": "123 Main St",
+          "city": "San Francisco",
+          "state": "California",
+          "zipCode": "94105",
+          "country": "USA"
+      }
+  },
+  "professionalInformation": {
+      "education": [
+          {
+              "degree": "Bachelor of Science in Computer Science",
+              "institution": "University of California, Berkeley",
+              "yearOfGraduation": "2012-06-01T00:00:00Z",
+              "fieldOfStudy": "Computer Science",
+              "grade": "3.8 GPA"
+          },
+          {
+              "degree": "Master of Science in Software Engineering",
+              "institution": "Stanford University",
+              "yearOfGraduation": "2014-06-01T00:00:00Z",
+              "fieldOfStudy": "Software Engineering",
+              "grade": "4.0 GPA"
+          }
+      ],
+      "experience": [
+          {
+              "jobTitle": "Frontend Developer",
+              "companyName": "Tech Solutions Inc.",
+              "duration": "2 years",
+              "responsibilities": "Developed responsive web applications using React.js and ensured cross-browser compatibility."
+          },
+          {
+              "jobTitle": "Senior Software Engineer",
+              "companyName": "Innovatech",
+              "duration": "3 years",
+              "responsibilities": "Led a team of developers to build scalable web applications and improve application performance."
+          }
+      ],
+      "certifications": [
+          {
+              "title": "Certified React Developer",
+              "institution": "React Academy",
+              "issueDate": "2021-03-15T00:00:00Z",
+              "expireDate": "2024-03-15T00:00:00Z",
+              "credentialId": "12345",
+              "credentialUrl": "https://reactacademy.com/certifications/12345",
+              "certificateFile": "react_developer_cert.pdf"
+          },
+          {
+              "title": "AWS Certified Solutions Architect",
+              "institution": "Amazon Web Services",
+              "issueDate": "2020-09-20T00:00:00Z",
+              "expireDate": "2023-09-20T00:00:00Z",
+              "credentialId": "67890",
+              "credentialUrl": "https://aws.amazon.com/certifications/67890",
+              "certificateFile": "aws_cert.pdf"
+          }
+      ],
+      "skills": [
+          "JavaScript",
+          "React.js",
+          "Node.js",
+          "MongoDB",
+          "AWS"
+      ]
+  }
+}
