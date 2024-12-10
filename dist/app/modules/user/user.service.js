@@ -82,10 +82,23 @@ const updateOrCreateUserProfessionalInformation = (payload, user, files) => __aw
             fileMap[file.originalname] = cloudRes.secure_url;
         }
     }
-    if (certifications && certifications.length > 0) {
-        const processedCertifications = certifications.map((cert) => (Object.assign(Object.assign({}, cert), { certificateFile: fileMap[cert.fileId] || null })));
+    console.log("fileMap", fileMap, certifications);
+    if (certifications && certifications.length > 0 && Object.keys(fileMap).length > 0) {
+        const processedCertifications = certifications.map((cert) => {
+            if (fileMap[cert.fileId]) {
+                return Object.assign(Object.assign({}, cert), { certificateFile: fileMap[cert.fileId] });
+            }
+            return cert;
+        });
         payload.certifications = processedCertifications;
     }
+    // if (certifications && certifications.length > 0 && Object.keys(fileMap).length > 0) {
+    //   const processedCertifications = certifications.map((cert: any) => ({
+    //     ...cert,
+    //     certificateFile: fileMap[cert.fileId] || null,
+    //   }));
+    //   payload.certifications = processedCertifications;
+    // }
     const isProfessionalInformationExist = yield professional_info_model_1.ProfessionalInfo.findOne({
         user: _id,
     });
@@ -159,9 +172,13 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
             $project: {
                 email: 1,
                 name: 1,
+                role: 1,
+                phone: 1,
+                createdAt: 1,
+                updatedAt: 1,
                 personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
                 professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
-                documents: 1,
+                documents: { $arrayElemAt: ['$documents', 0] },
             },
         },
     ]);

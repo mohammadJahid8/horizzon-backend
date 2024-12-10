@@ -104,14 +104,30 @@ const updateOrCreateUserProfessionalInformation = async (
     }
   }
 
-  if (certifications && certifications.length > 0) {
-    const processedCertifications = certifications.map((cert: any) => ({
-      ...cert,
-      certificateFile: fileMap[cert.fileId] || null,
-    }));
+  console.log("fileMap", fileMap,certifications);
+
+  if (certifications && certifications.length > 0 && Object.keys(fileMap).length > 0) {
+    const processedCertifications = certifications.map((cert: any) => {
+      if (fileMap[cert.fileId]) {
+        return {
+          ...cert,
+          certificateFile: fileMap[cert.fileId],
+        };
+      }
+      return cert;
+    });
 
     payload.certifications = processedCertifications;
   }
+
+  // if (certifications && certifications.length > 0 && Object.keys(fileMap).length > 0) {
+  //   const processedCertifications = certifications.map((cert: any) => ({
+  //     ...cert,
+  //     certificateFile: fileMap[cert.fileId] || null,
+  //   }));
+
+  //   payload.certifications = processedCertifications;
+  // }
 
   const isProfessionalInformationExist = await ProfessionalInfo.findOne({
     user: _id,

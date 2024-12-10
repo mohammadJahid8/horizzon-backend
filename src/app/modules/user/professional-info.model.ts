@@ -11,7 +11,7 @@ const ProfessionalInfoSchema = new Schema<any>(
       {
         degree: String,
         institution: String,
-        yearOfGraduation: Date,
+        yearOfGraduation: Number,
         fieldOfStudy: String,
         grade: String,
       },
@@ -26,10 +26,11 @@ const ProfessionalInfoSchema = new Schema<any>(
     ],
     certifications: [
       {
+        fileId: Number || String,
         title: String,
         institution: String,
-        issueDate: Date,
-        expireDate: Date,
+        issueDate: Date || String,
+        expireDate: Date || String,
         credentialId: String,
         credentialUrl: String,
         certificateFile: String,
