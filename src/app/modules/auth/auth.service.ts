@@ -171,7 +171,7 @@ const changePassword = async (
   user: JwtPayload | null,
   payload: IChangePassword
 ): Promise<void> => {
-  const { oldPassword, newPassword } = payload;
+  const { oldPassword, password } = payload;
 
   //alternative way
   const isUserExist = await User.findOne({ id: user?.userId }).select(
@@ -205,7 +205,7 @@ const changePassword = async (
 
   // await User.findOneAndUpdate(query, updatedData);
   // data update
-  isUserExist.password = newPassword;
+  isUserExist.password = password;
 
   // updating using save()
   isUserExist.save();
@@ -217,67 +217,97 @@ const forgotPass = async (payload: { email: string }) => {
   if (isGoogleUser) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      'This user is associated with google! Please use google login.'
+      'This user is associated with Google! Please use Google login.'
     );
   }
 
   const user = await User.findOne(
     { email: payload.email, isGoogleUser: false },
-    { email: 1, role: 1, name: 1, _id: 1 }
+    { email: 1, role: 1, _id: 1 }
   );
 
   if (!user) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'User does not exist!');
   }
 
-  const passResetToken = await jwtHelpers.createResetToken(
-    { email: user.email, _id: user._id },
-    config.jwt.secret as string,
-    '50m'
-  );
+  // Generate a 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpExpiry = new Date(Date.now() + 2 * 60 * 1000 + 10 * 1000); // 2 minutes 10 seconds expiry
 
-  const resetLink: string = config.resetlink + `?token=${passResetToken}`;
+  // Save OTP and its expiration in the user's record
+  await User.updateOne({ email: user.email }, { otp, otpExpiry });
 
+  // Send the OTP to the user's email
   await sendEmail(
     user.email,
     `
       <div>
-        <p>Hi, ${user.name}</p>
-        <p>Your password reset link: <a href=${resetLink}>Click Here</a></p>
+        <p>Your OTP for password reset is: <strong>${otp}</strong></p>
+        <p>This OTP is valid for 2 minutes.</p>
         <p>Thank you</p>
       </div>
-  `
+    `
   );
+
+  return {
+    otpExpiry,
+  };
 };
 
-const resetPassword = async (payload: {
-  email: string;
-  newPassword: string;
-  token: string;
-}) => {
-  const { email, newPassword, token } = payload;
-  const user = await User.findOne({ email }, { email: 1, _id: 1 });
+const verifyOtp = async (payload: { email: string; otp: string }) => {
+  const { email, otp } = payload;
+
+  const user = await User.findOne({ email }, { otp: 1, otpExpiry: 1 });
 
   if (!user) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'User not found!');
   }
 
-  console.log('token: ', token);
-  const isVerified = await jwtHelpers.verifyToken(
-    token,
-    config.jwt.secret as string
-  );
-
-  if (!isVerified) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Unauthorized!');
+  if (!user.otp || !user.otpExpiry || new Date() > user.otpExpiry) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      'OTP has expired or is invalid!'
+    );
   }
 
-  const password = await bcrypt.hash(
-    newPassword,
+  if (user.otp !== otp) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid OTP!');
+  }
+
+  // Mark user as verified for password reset
+  await User.updateOne(
+    { email },
+    { otp: null, otpExpiry: null, canResetPassword: true }
+  );
+};
+
+const resetPassword = async (payload: { email: string; password: string }) => {
+  const { email, password } = payload;
+
+  const user = await User.findOne({ email }, { canResetPassword: 1 });
+
+  if (!user) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User not found!');
+  }
+
+  if (!user.canResetPassword) {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      'Password reset not allowed. Verify OTP first!'
+    );
+  }
+
+  // Hash the new password
+  const hashedPassword = await bcrypt.hash(
+    password,
     Number(config.bycrypt_salt_rounds)
   );
 
-  await User.updateOne({ email }, { password });
+  // Update the user's password and reset the eligibility flag
+  await User.updateOne(
+    { email },
+    { password: hashedPassword, canResetPassword: false }
+  );
 };
 
 export const AuthService = {
@@ -287,4 +317,5 @@ export const AuthService = {
   changePassword,
   forgotPass,
   resetPassword,
+  verifyOtp,
 };

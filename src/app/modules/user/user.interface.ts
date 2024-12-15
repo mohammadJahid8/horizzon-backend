@@ -10,6 +10,9 @@ export type IUser = {
   phone: string;
   image: string;
   isGoogleUser: boolean;
+  otp: string;
+  otpExpiry: Date;
+  canResetPassword: boolean;
   personalInformation: {
     bio: string;
     dateOfBirth: Date;

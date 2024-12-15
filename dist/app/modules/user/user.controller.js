@@ -64,7 +64,8 @@ const updateOrCreateUserProfessionalInformation = (0, catchAsync_1.default)((req
 }));
 const updateOrCreateUserDocuments = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const files = req.files;
-    const result = yield user_service_1.UserService.updateOrCreateUserDocuments(req.user, files);
+    const payload = JSON.parse(req.body.data || '{}');
+    const result = yield user_service_1.UserService.updateOrCreateUserDocuments(req.user, files, payload);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,

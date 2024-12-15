@@ -19,7 +19,7 @@ function sendEmail(to, html) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const transporter = nodemailer_1.default.createTransport({
-                host: "smtp.gmail.com",
+                host: 'smtp.gmail.com',
                 port: 587,
                 secure: false,
                 auth: {
@@ -30,7 +30,7 @@ function sendEmail(to, html) {
             yield transporter.sendMail({
                 from: config_1.default.email, // sender address
                 to, // list of receivers
-                subject: "Reset Password Link", // Subject line
+                subject: 'Reset Password', // Subject line
                 html, // html body
             });
         }

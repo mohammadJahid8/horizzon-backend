@@ -86,12 +86,23 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 const forgotPass = catchAsync(async (req: Request, res: Response) => {
-  await AuthService.forgotPass(req.body);
+  const result = await AuthService.forgotPass(req.body);
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'Password reset link sent to your email!',
+    message: 'Please check your email for OTP!',
+    data: result,
+  });
+});
+
+const verifyOtp = catchAsync(async (req: Request, res: Response) => {
+  await AuthService.verifyOtp(req.body);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'OTP verified successfully!',
   });
 });
 
@@ -110,6 +121,7 @@ export const AuthController = {
   refreshToken,
   changePassword,
   forgotPass,
+  verifyOtp,
   resetPassword,
   loginWithGoogle,
 };

@@ -125,15 +125,6 @@ const updateOrCreateUserProfessionalInformation = async (
     payload.certifications = processedCertifications;
   }
 
-  // if (certifications && certifications.length > 0 && Object.keys(fileMap).length > 0) {
-  //   const processedCertifications = certifications.map((cert: any) => ({
-  //     ...cert,
-  //     certificateFile: fileMap[cert.fileId] || null,
-  //   }));
-
-  //   payload.certifications = processedCertifications;
-  // }
-
   const isProfessionalInformationExist = await ProfessionalInfo.findOne({
     user: _id,
   });

@@ -25,5 +25,5 @@ export type IVerifiedLoginUser = {
 
 export type IChangePassword = {
   oldPassword: string;
-  newPassword: string;
+  password: string;
 };

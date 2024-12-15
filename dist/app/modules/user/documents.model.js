@@ -9,13 +9,13 @@ const DocumentsSchema = new mongoose_1.Schema({
         ref: 'User',
     },
     certificate: {
-        type: String,
+        type: String || null,
     },
     resume: {
-        type: String,
+        type: String || null,
     },
     governmentId: {
-        type: String,
+        type: String || null,
     },
 }, {
     timestamps: true,

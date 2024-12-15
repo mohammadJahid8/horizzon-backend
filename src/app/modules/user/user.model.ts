@@ -33,6 +33,18 @@ const UserSchema = new Schema<IUser, UserModel>(
       type: Boolean,
       default: false,
     },
+    otp: {
+      type: String,
+      required: false,
+    },
+    otpExpiry: {
+      type: Date,
+      required: false,
+    },
+    canResetPassword: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

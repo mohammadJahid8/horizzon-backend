@@ -14,5 +14,6 @@ router.post('/google', auth_controller_1.AuthController.loginWithGoogle);
 router.post('/refresh-token', auth_controller_1.AuthController.refreshToken);
 router.post('/change-password', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), auth_controller_1.AuthController.changePassword);
 router.post('/forgot-password', auth_controller_1.AuthController.forgotPass);
+router.post('/verify-otp', auth_controller_1.AuthController.verifyOtp);
 router.post('/reset-password', auth_controller_1.AuthController.resetPassword);
 exports.AuthRoutes = router;

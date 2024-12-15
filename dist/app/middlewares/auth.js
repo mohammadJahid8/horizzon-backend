@@ -22,7 +22,7 @@ const auth = (...requiredRoles) => (req, res, next) => __awaiter(void 0, void 0,
         const token = req.headers.authorization;
         // req.cookies.refreshToken ||
         // req.cookies.accessToken;
-        console.log({ token });
+        // console.log({ token });
         if (!token) {
             throw new ApiError_1.default(http_status_1.default.UNAUTHORIZED, 'You are not authorized');
         }
@@ -30,7 +30,7 @@ const auth = (...requiredRoles) => (req, res, next) => __awaiter(void 0, void 0,
         let verifiedUser = null;
         verifiedUser = jwtHelpers_1.jwtHelpers.verifyToken(token, config_1.default.jwt.secret);
         req.user = verifiedUser; // role  , userid
-        console.log({ verifiedUser });
+        // console.log({ verifiedUser });
         // role diye guard korar jnno
         if (requiredRoles.length && !requiredRoles.includes(verifiedUser.role)) {
             throw new ApiError_1.default(http_status_1.default.FORBIDDEN, 'Forbidden');

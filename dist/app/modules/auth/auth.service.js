@@ -103,7 +103,7 @@ const refreshToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
     };
 });
 const changePassword = (user, payload) => __awaiter(void 0, void 0, void 0, function* () {
-    const { oldPassword, newPassword } = payload;
+    const { oldPassword, password } = payload;
     //alternative way
     const isUserExist = yield user_model_1.User.findOne({ id: user === null || user === void 0 ? void 0 : user.userId }).select('+password');
     if (!isUserExist) {
@@ -127,42 +127,64 @@ const changePassword = (user, payload) => __awaiter(void 0, void 0, void 0, func
     // };
     // await User.findOneAndUpdate(query, updatedData);
     // data update
-    isUserExist.password = newPassword;
+    isUserExist.password = password;
     // updating using save()
     isUserExist.save();
 });
 const forgotPass = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const isGoogleUser = yield user_model_1.User.isGoogleUser(payload.email);
     if (isGoogleUser) {
-        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'This user is associated with google! Please use google login.');
+        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'This user is associated with Google! Please use Google login.');
     }
-    const user = yield user_model_1.User.findOne({ email: payload.email, isGoogleUser: false }, { email: 1, role: 1, name: 1, _id: 1 });
+    const user = yield user_model_1.User.findOne({ email: payload.email, isGoogleUser: false }, { email: 1, role: 1, _id: 1 });
     if (!user) {
         throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'User does not exist!');
     }
-    const passResetToken = yield jwtHelpers_1.jwtHelpers.createResetToken({ email: user.email, _id: user._id }, config_1.default.jwt.secret, '50m');
-    const resetLink = config_1.default.resetlink + `?token=${passResetToken}`;
+    // Generate a 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 2 * 60 * 1000 + 10 * 1000); // 2 minutes 10 seconds expiry
+    // Save OTP and its expiration in the user's record
+    yield user_model_1.User.updateOne({ email: user.email }, { otp, otpExpiry });
+    // Send the OTP to the user's email
     yield (0, sendResetMail_1.sendEmail)(user.email, `
       <div>
-        <p>Hi, ${user.name}</p>
-        <p>Your password reset link: <a href=${resetLink}>Click Here</a></p>
+        <p>Your OTP for password reset is: <strong>${otp}</strong></p>
+        <p>This OTP is valid for 2 minutes.</p>
         <p>Thank you</p>
       </div>
-  `);
+    `);
+    return {
+        otpExpiry,
+    };
 });
-const resetPassword = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email, newPassword, token } = payload;
-    const user = yield user_model_1.User.findOne({ email }, { email: 1, _id: 1 });
+const verifyOtp = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, otp } = payload;
+    const user = yield user_model_1.User.findOne({ email }, { otp: 1, otpExpiry: 1 });
     if (!user) {
         throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'User not found!');
     }
-    console.log('token: ', token);
-    const isVerified = yield jwtHelpers_1.jwtHelpers.verifyToken(token, config_1.default.jwt.secret);
-    if (!isVerified) {
-        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'Unauthorized!');
+    if (!user.otp || !user.otpExpiry || new Date() > user.otpExpiry) {
+        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'OTP has expired or is invalid!');
     }
-    const password = yield bcrypt_1.default.hash(newPassword, Number(config_1.default.bycrypt_salt_rounds));
-    yield user_model_1.User.updateOne({ email }, { password });
+    if (user.otp !== otp) {
+        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'Invalid OTP!');
+    }
+    // Mark user as verified for password reset
+    yield user_model_1.User.updateOne({ email }, { otp: null, otpExpiry: null, canResetPassword: true });
+});
+const resetPassword = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, password } = payload;
+    const user = yield user_model_1.User.findOne({ email }, { canResetPassword: 1 });
+    if (!user) {
+        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'User not found!');
+    }
+    if (!user.canResetPassword) {
+        throw new ApiError_1.default(http_status_1.default.FORBIDDEN, 'Password reset not allowed. Verify OTP first!');
+    }
+    // Hash the new password
+    const hashedPassword = yield bcrypt_1.default.hash(password, Number(config_1.default.bycrypt_salt_rounds));
+    // Update the user's password and reset the eligibility flag
+    yield user_model_1.User.updateOne({ email }, { password: hashedPassword, canResetPassword: false });
 });
 exports.AuthService = {
     loginUser,
@@ -171,4 +193,5 @@ exports.AuthService = {
     changePassword,
     forgotPass,
     resetPassword,
+    verifyOtp,
 };

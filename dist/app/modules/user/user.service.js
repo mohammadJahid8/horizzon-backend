@@ -82,8 +82,10 @@ const updateOrCreateUserProfessionalInformation = (payload, user, files) => __aw
             fileMap[file.originalname] = cloudRes.secure_url;
         }
     }
-    console.log("fileMap", fileMap, certifications);
-    if (certifications && certifications.length > 0 && Object.keys(fileMap).length > 0) {
+    console.log('fileMap', fileMap, certifications);
+    if (certifications &&
+        certifications.length > 0 &&
+        Object.keys(fileMap).length > 0) {
         const processedCertifications = certifications.map((cert) => {
             if (fileMap[cert.fileId]) {
                 return Object.assign(Object.assign({}, cert), { certificateFile: fileMap[cert.fileId] });
@@ -92,13 +94,6 @@ const updateOrCreateUserProfessionalInformation = (payload, user, files) => __aw
         });
         payload.certifications = processedCertifications;
     }
-    // if (certifications && certifications.length > 0 && Object.keys(fileMap).length > 0) {
-    //   const processedCertifications = certifications.map((cert: any) => ({
-    //     ...cert,
-    //     certificateFile: fileMap[cert.fileId] || null,
-    //   }));
-    //   payload.certifications = processedCertifications;
-    // }
     const isProfessionalInformationExist = yield professional_info_model_1.ProfessionalInfo.findOne({
         user: _id,
     });
@@ -109,10 +104,10 @@ const updateOrCreateUserProfessionalInformation = (payload, user, files) => __aw
     result = yield professional_info_model_1.ProfessionalInfo.findOneAndUpdate({ user: _id }, { $set: payload }, { new: true });
     return result;
 });
-const updateOrCreateUserDocuments = (user, files) => __awaiter(void 0, void 0, void 0, function* () {
+const updateOrCreateUserDocuments = (user, files, payload) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f;
     const { _id } = user;
-    const fileMap = {};
+    let fileMap = {};
     if ((_b = (_a = files === null || files === void 0 ? void 0 : files.certificate) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.path) {
         fileMap.certificate = files.certificate[0].path;
     }
@@ -125,6 +120,7 @@ const updateOrCreateUserDocuments = (user, files) => __awaiter(void 0, void 0, v
     if (Object.keys(fileMap).length > 0) {
         for (const file of Object.keys(fileMap)) {
             const cloudRes = yield cloudinary_1.default.v2.uploader.upload(fileMap[file]);
+            console.log('cloudRes', cloudRes);
             fileMap[file] = cloudRes.secure_url;
         }
     }
@@ -133,6 +129,10 @@ const updateOrCreateUserDocuments = (user, files) => __awaiter(void 0, void 0, v
     if (!isDocumentsExist) {
         result = yield documents_model_1.Documents.create(Object.assign({ user: _id }, fileMap));
     }
+    if (Object.keys(payload).length > 0) {
+        fileMap = payload;
+    }
+    console.log('query', fileMap);
     result = yield documents_model_1.Documents.findOneAndUpdate({ user: _id }, { $set: fileMap }, { new: true });
     return result;
 });
