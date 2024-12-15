@@ -8,13 +8,13 @@ const DocumentsSchema = new Schema<any>(
       ref: 'User',
     },
     certificate: {
-      type: String,
+      type: String || null,
     },
     resume: {
-      type: String,
+      type: String || null,
     },
     governmentId: {
-      type: String,
+      type: String || null,
     },
   },
   {

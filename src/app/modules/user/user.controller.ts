@@ -83,10 +83,12 @@ const updateOrCreateUserProfessionalInformation = catchAsync(
 const updateOrCreateUserDocuments = catchAsync(
   async (req: Request, res: Response) => {
     const files = req.files;
+    const payload = JSON.parse(req.body.data || '{}');
 
     const result = await UserService.updateOrCreateUserDocuments(
       req.user as Partial<IUser>,
-      files
+      files,
+      payload
     );
 
     sendResponse<IUser>(res, {
@@ -97,6 +99,8 @@ const updateOrCreateUserDocuments = catchAsync(
     });
   }
 );
+
+
 
 const getUserProfile: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {

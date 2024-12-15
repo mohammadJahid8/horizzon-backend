@@ -100,13 +100,18 @@ const updateOrCreateUserProfessionalInformation = async (
   if (files.length > 0) {
     for (const file of files) {
       const cloudRes = await cloudinary.v2.uploader.upload(file.path);
+
       fileMap[file.originalname] = cloudRes.secure_url;
     }
   }
 
-  console.log("fileMap", fileMap,certifications);
+  console.log('fileMap', fileMap, certifications);
 
-  if (certifications && certifications.length > 0 && Object.keys(fileMap).length > 0) {
+  if (
+    certifications &&
+    certifications.length > 0 &&
+    Object.keys(fileMap).length > 0
+  ) {
     const processedCertifications = certifications.map((cert: any) => {
       if (fileMap[cert.fileId]) {
         return {
@@ -148,11 +153,12 @@ const updateOrCreateUserProfessionalInformation = async (
 };
 const updateOrCreateUserDocuments = async (
   user: Partial<IUser>,
-  files: any
+  files: any,
+  payload: any
 ): Promise<any> => {
   const { _id } = user;
 
-  const fileMap: any = {};
+  let fileMap: any = {};
 
   if (files?.certificate?.[0]?.path) {
     fileMap.certificate = files.certificate[0].path;
@@ -167,6 +173,7 @@ const updateOrCreateUserDocuments = async (
   if (Object.keys(fileMap).length > 0) {
     for (const file of Object.keys(fileMap)) {
       const cloudRes = await cloudinary.v2.uploader.upload(fileMap[file]);
+      console.log('cloudRes', cloudRes);
       fileMap[file] = cloudRes.secure_url;
     }
   }
@@ -178,6 +185,12 @@ const updateOrCreateUserDocuments = async (
   if (!isDocumentsExist) {
     result = await Documents.create({ user: _id, ...fileMap });
   }
+
+  if (Object.keys(payload).length > 0) {
+    fileMap = payload;
+  }
+
+  console.log('query', fileMap);
 
   result = await Documents.findOneAndUpdate(
     { user: _id },

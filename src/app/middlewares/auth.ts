@@ -13,7 +13,7 @@ const auth =
       const token = req.headers.authorization;
       // req.cookies.refreshToken ||
       // req.cookies.accessToken;
-      console.log({ token });
+      // console.log({ token });
       if (!token) {
         throw new ApiError(httpStatus.UNAUTHORIZED, 'You are not authorized');
       }
@@ -24,7 +24,7 @@ const auth =
 
       req.user = verifiedUser; // role  , userid
 
-      console.log({ verifiedUser });
+      // console.log({ verifiedUser });
 
       // role diye guard korar jnno
       if (requiredRoles.length && !requiredRoles.includes(verifiedUser.role)) {
