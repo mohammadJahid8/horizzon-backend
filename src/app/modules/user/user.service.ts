@@ -231,6 +231,7 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
         name: 1,
         role: 1,
         phone: 1,
+        coverImage: 1,
         createdAt: 1,
         updatedAt: 1,
         personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
@@ -243,6 +244,82 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
   return result.length > 0 ? result[0] : null;
 };
 
+const getUserById = async (id: string): Promise<IUser | null> => {
+  if (!id) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User id is required');
+  }
+
+  const result = await User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(id),
+      },
+    },
+
+    {
+      $lookup: {
+        from: 'personalinformations',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'personalInfo',
+      },
+    },
+    {
+      $lookup: {
+        from: 'professionalinformations',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'professionalInfo',
+      },
+    },
+    {
+      $lookup: {
+        from: 'documents',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'documents',
+      },
+    },
+    {
+      $project: {
+        email: 1,
+        name: 1,
+        role: 1,
+        phone: 1,
+        coverImage: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
+        professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
+        documents: { $arrayElemAt: ['$documents', 0] },
+      },
+    },
+  ]);
+
+  return result.length > 0 ? result[0] : null;
+};
+
+const updateCoverImage = async (
+  id: string,
+  file: any
+): Promise<IUser | null> => {
+  if (!id) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User id is required');
+  }
+
+  if (!file?.path) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'File is required');
+  }
+
+  const cloudRes = await cloudinary.v2.uploader.upload(file.path);
+  const result = await User.findByIdAndUpdate(
+    id,
+    { coverImage: cloudRes.secure_url },
+    { new: true }
+  );
+  return result;
+};
+
 export const UserService = {
   createUser,
   updateUser,
@@ -250,4 +327,6 @@ export const UserService = {
   updateOrCreateUserPersonalInformation,
   updateOrCreateUserProfessionalInformation,
   updateOrCreateUserDocuments,
+  getUserById,
+  updateCoverImage,
 };

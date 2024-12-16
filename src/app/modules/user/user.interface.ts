@@ -11,6 +11,7 @@ export type IUser = {
   image: string;
   isGoogleUser: boolean;
   otp: string;
+  coverImage: string;
   otpExpiry: Date;
   canResetPassword: boolean;
   personalInformation: {

@@ -4,7 +4,8 @@
   "description": "",
   "main": "src/server.ts",
   "scripts": {
-    "start": "bun --watch src/server.ts",
+    "start": "bun run dist/server.js",
+    "dev": "bun --watch src/server.ts",
     "lint:check": "bun run eslint --ignore-path .eslintignore --ext .js,.ts .",
     "lint:fix": "bun run eslint . --fix",
     "prettier:check": "bun run prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",

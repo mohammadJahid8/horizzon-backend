@@ -46,4 +46,17 @@ router.get(
   UserController.getUserProfile
 );
 
+router.get(
+  '/:id',
+  auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
+  UserController.getUserById
+);
+
+router.patch(
+  '/cover-image',
+  auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
+  upload.single('coverImage'),
+  UserController.updateCoverImage
+);
+
 export const UserRoutes = router;

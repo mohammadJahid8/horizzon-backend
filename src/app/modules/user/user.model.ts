@@ -24,6 +24,10 @@ const UserSchema = new Schema<IUser, UserModel>(
       required: true,
       unique: true,
     },
+    coverImage: {
+      type: String,
+      required: false,
+    },
     phone: {
       type: String,
       required: false,

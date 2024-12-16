@@ -100,8 +100,6 @@ const updateOrCreateUserDocuments = catchAsync(
   }
 );
 
-
-
 const getUserProfile: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
     const result = await UserService.getUserProfile(req.user as Partial<IUser>);
@@ -115,6 +113,32 @@ const getUserProfile: RequestHandler = catchAsync(
   }
 );
 
+const getUserById: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.getUserById(req.params.id);
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'User profile retrieved successfully!',
+      data: result,
+    });
+  }
+);
+const updateCoverImage: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const user = req.user;
+    const result = await UserService.updateCoverImage(user?._id, req.file);
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'User cover image updated successfully!',
+      data: result,
+    });
+  }
+);
+
 export const UserController = {
   createUser,
   updateUser,
@@ -122,4 +146,6 @@ export const UserController = {
   updateOrCreateUserPersonalInformation,
   updateOrCreateUserProfessionalInformation,
   updateOrCreateUserDocuments,
+  getUserById,
+  updateCoverImage,
 };
