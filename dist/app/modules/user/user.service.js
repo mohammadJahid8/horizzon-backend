@@ -174,6 +174,7 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
                 name: 1,
                 role: 1,
                 phone: 1,
+                coverImage: 1,
                 createdAt: 1,
                 updatedAt: 1,
                 personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
@@ -184,6 +185,68 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
     ]);
     return result.length > 0 ? result[0] : null;
 });
+const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!id) {
+        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'User id is required');
+    }
+    const result = yield user_model_1.User.aggregate([
+        {
+            $match: {
+                _id: new mongoose_1.default.Types.ObjectId(id),
+            },
+        },
+        {
+            $lookup: {
+                from: 'personalinformations',
+                localField: '_id',
+                foreignField: 'user',
+                as: 'personalInfo',
+            },
+        },
+        {
+            $lookup: {
+                from: 'professionalinformations',
+                localField: '_id',
+                foreignField: 'user',
+                as: 'professionalInfo',
+            },
+        },
+        {
+            $lookup: {
+                from: 'documents',
+                localField: '_id',
+                foreignField: 'user',
+                as: 'documents',
+            },
+        },
+        {
+            $project: {
+                email: 1,
+                name: 1,
+                role: 1,
+                phone: 1,
+                coverImage: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
+                professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
+                documents: { $arrayElemAt: ['$documents', 0] },
+            },
+        },
+    ]);
+    return result.length > 0 ? result[0] : null;
+});
+const updateCoverImage = (id, file) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!id) {
+        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'User id is required');
+    }
+    if (!(file === null || file === void 0 ? void 0 : file.path)) {
+        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'File is required');
+    }
+    const cloudRes = yield cloudinary_1.default.v2.uploader.upload(file.path);
+    const result = yield user_model_1.User.findByIdAndUpdate(id, { coverImage: cloudRes.secure_url }, { new: true });
+    return result;
+});
 exports.UserService = {
     createUser,
     updateUser,
@@ -191,4 +254,6 @@ exports.UserService = {
     updateOrCreateUserPersonalInformation,
     updateOrCreateUserProfessionalInformation,
     updateOrCreateUserDocuments,
+    getUserById,
+    updateCoverImage,
 };

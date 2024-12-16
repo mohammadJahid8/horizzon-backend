@@ -35,6 +35,10 @@ const UserSchema = new mongoose_1.Schema({
         required: true,
         unique: true,
     },
+    coverImage: {
+        type: String,
+        required: false,
+    },
     phone: {
         type: String,
         required: false,

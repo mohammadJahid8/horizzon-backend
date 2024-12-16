@@ -82,6 +82,25 @@ const getUserProfile = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
         data: result,
     });
 }));
+const getUserById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.getUserById(req.params.id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'User profile retrieved successfully!',
+        data: result,
+    });
+}));
+const updateCoverImage = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = req.user;
+    const result = yield user_service_1.UserService.updateCoverImage(user === null || user === void 0 ? void 0 : user._id, req.file);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'User cover image updated successfully!',
+        data: result,
+    });
+}));
 exports.UserController = {
     createUser,
     updateUser,
@@ -89,4 +108,6 @@ exports.UserController = {
     updateOrCreateUserPersonalInformation,
     updateOrCreateUserProfessionalInformation,
     updateOrCreateUserDocuments,
+    getUserById,
+    updateCoverImage,
 };
