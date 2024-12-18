@@ -59,4 +59,10 @@ router.patch(
   UserController.updateCoverImage
 );
 
+router.patch(
+  '/company-information',
+  auth(ENUM_USER_ROLE.PARTNER),
+  UserController.updateOrCreateUserCompanyInformation
+);
+
 export const UserRoutes = router;

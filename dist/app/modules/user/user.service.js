@@ -20,6 +20,7 @@ const cloudinary_1 = __importDefault(require("cloudinary"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const config_1 = __importDefault(require("../../../config"));
 const user_1 = require("../../../enums/user");
+const company_info_model_1 = require("./company-info.model");
 const documents_model_1 = require("./documents.model");
 const personal_info_model_1 = require("./personal-info.model");
 const professional_info_model_1 = require("./professional-info.model");
@@ -55,11 +56,25 @@ const updateUser = (payload, user
     });
     return result;
 });
+const updateOrCreateUserCompanyInformation = (payload, user) => __awaiter(void 0, void 0, void 0, function* () {
+    const { _id } = user;
+    console.log({ payload, user });
+    const isCompanyInformationExist = yield company_info_model_1.CompanyInfo.findOne({
+        user: _id,
+    });
+    let result;
+    if (!isCompanyInformationExist) {
+        result = yield company_info_model_1.CompanyInfo.create(Object.assign({ user: _id }, payload));
+    }
+    result = yield company_info_model_1.CompanyInfo.findOneAndUpdate({ user: _id }, { $set: payload }, { new: true });
+    return result;
+});
 const updateOrCreateUserPersonalInformation = (payload, user, file) => __awaiter(void 0, void 0, void 0, function* () {
     const { _id } = user;
     const isPersonalInformationExist = yield personal_info_model_1.PersonalInfo.findOne({
         user: _id,
     });
+    // console.log({ file, payload });
     if (file === null || file === void 0 ? void 0 : file.path) {
         const cloudRes = yield cloudinary_1.default.v2.uploader.upload(file.path);
         payload.image = cloudRes.secure_url;
@@ -73,7 +88,6 @@ const updateOrCreateUserPersonalInformation = (payload, user, file) => __awaiter
 });
 const updateOrCreateUserProfessionalInformation = (payload, user, files) => __awaiter(void 0, void 0, void 0, function* () {
     const { _id } = user;
-    // console.log({ _id, payload });
     const { certifications } = payload;
     const fileMap = {};
     if (files.length > 0) {
@@ -82,7 +96,7 @@ const updateOrCreateUserProfessionalInformation = (payload, user, files) => __aw
             fileMap[file.originalname] = cloudRes.secure_url;
         }
     }
-    console.log('fileMap', fileMap, certifications);
+    // console.log('fileMap', fileMap, certifications);
     if (certifications &&
         certifications.length > 0 &&
         Object.keys(fileMap).length > 0) {
@@ -120,7 +134,7 @@ const updateOrCreateUserDocuments = (user, files, payload) => __awaiter(void 0, 
     if (Object.keys(fileMap).length > 0) {
         for (const file of Object.keys(fileMap)) {
             const cloudRes = yield cloudinary_1.default.v2.uploader.upload(fileMap[file]);
-            console.log('cloudRes', cloudRes);
+            // console.log('cloudRes', cloudRes);
             fileMap[file] = cloudRes.secure_url;
         }
     }
@@ -132,7 +146,7 @@ const updateOrCreateUserDocuments = (user, files, payload) => __awaiter(void 0, 
     if (Object.keys(payload).length > 0) {
         fileMap = payload;
     }
-    console.log('query', fileMap);
+    // console.log('query', fileMap);
     result = yield documents_model_1.Documents.findOneAndUpdate({ user: _id }, { $set: fileMap }, { new: true });
     return result;
 });
@@ -169,6 +183,14 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
             },
         },
         {
+            $lookup: {
+                from: 'companyinformations',
+                localField: '_id',
+                foreignField: 'user',
+                as: 'companyInfo',
+            },
+        },
+        {
             $project: {
                 email: 1,
                 name: 1,
@@ -180,6 +202,7 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
                 personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
                 professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
                 documents: { $arrayElemAt: ['$documents', 0] },
+                companyInfo: { $arrayElemAt: ['$companyInfo', 0] },
             },
         },
     ]);
@@ -220,6 +243,14 @@ const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
             },
         },
         {
+            $lookup: {
+                from: 'companyinformations',
+                localField: '_id',
+                foreignField: 'user',
+                as: 'companyInfo',
+            },
+        },
+        {
             $project: {
                 email: 1,
                 name: 1,
@@ -231,6 +262,7 @@ const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
                 personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
                 professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
                 documents: { $arrayElemAt: ['$documents', 0] },
+                companyInfo: { $arrayElemAt: ['$companyInfo', 0] },
             },
         },
     ]);
@@ -256,4 +288,5 @@ exports.UserService = {
     updateOrCreateUserDocuments,
     getUserById,
     updateCoverImage,
+    updateOrCreateUserCompanyInformation,
 };

@@ -24,4 +24,5 @@ router.patch('/update', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_
 router.get('/profile', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), user_controller_1.UserController.getUserProfile);
 router.get('/:id', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), user_controller_1.UserController.getUserById);
 router.patch('/cover-image', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), upload.single('coverImage'), user_controller_1.UserController.updateCoverImage);
+router.patch('/company-information', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER), user_controller_1.UserController.updateOrCreateUserCompanyInformation);
 exports.UserRoutes = router;

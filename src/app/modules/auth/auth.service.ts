@@ -2,8 +2,12 @@ import bcrypt from 'bcrypt';
 import httpStatus from 'http-status';
 import { JwtPayload, Secret } from 'jsonwebtoken';
 import config from '../../../config';
+import { ENUM_USER_ROLE } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
 import { jwtHelpers } from '../../../helpers/jwtHelpers';
+import { Documents } from '../user/documents.model';
+import { PersonalInfo } from '../user/personal-info.model';
+import { ProfessionalInfo } from '../user/professional-info.model';
 import { User } from '../user/user.model';
 import {
   IChangePassword,
@@ -61,10 +65,28 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
     config.jwt.refresh_expires_in as string
   );
 
-  return {
+  const returnData: ILoginUserResponse = {
     accessToken,
     refreshToken,
   };
+
+  if (role === ENUM_USER_ROLE.PRO) {
+    const personalInfo = await PersonalInfo.findOne({ user: _id });
+    const professionalInfo = await ProfessionalInfo.findOne({ user: _id });
+    const documents = await Documents.findOne({ user: _id });
+
+    const totalSteps = 3;
+    const completedSteps = [
+      Object.keys(personalInfo || {}).length > 0,
+      Object.keys(professionalInfo || {}).length > 0,
+      Object.keys(documents || {}).length > 0,
+    ].filter(Boolean).length;
+
+    const completionPercentage = (completedSteps / totalSteps) * 100;
+    returnData.completionPercentage = completionPercentage;
+  }
+
+  return returnData;
 };
 
 const loginWithGoogle = async (
@@ -190,21 +212,6 @@ const changePassword = async (
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Old Password is incorrect');
   }
 
-  // // hash password before saving
-  // const newHashedPassword = await bcrypt.hash(
-  //   newPassword,
-  //   Number(config.bycrypt_salt_rounds)
-  // );
-
-  // const query = { id: user?.userId };
-  // const updatedData = {
-  //   password: newHashedPassword,  //
-  //   needsPasswordChange: false,
-  //   passwordChangedAt: new Date(), //
-  // };
-
-  // await User.findOneAndUpdate(query, updatedData);
-  // data update
   isUserExist.password = password;
 
   // updating using save()

@@ -16,8 +16,12 @@ exports.AuthService = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const http_status_1 = __importDefault(require("http-status"));
 const config_1 = __importDefault(require("../../../config"));
+const user_1 = require("../../../enums/user");
 const ApiError_1 = __importDefault(require("../../../errors/ApiError"));
 const jwtHelpers_1 = require("../../../helpers/jwtHelpers");
+const documents_model_1 = require("../user/documents.model");
+const personal_info_model_1 = require("../user/personal-info.model");
+const professional_info_model_1 = require("../user/professional-info.model");
 const user_model_1 = require("../user/user.model");
 const sendResetMail_1 = require("./sendResetMail");
 const loginUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
@@ -42,10 +46,24 @@ const loginUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { email: userEmail, role, _id } = isUserExist;
     const accessToken = jwtHelpers_1.jwtHelpers.createToken({ email: userEmail, role, _id }, config_1.default.jwt.secret, config_1.default.jwt.expires_in);
     const refreshToken = jwtHelpers_1.jwtHelpers.createToken({ email: userEmail, role, _id }, config_1.default.jwt.refresh_secret, config_1.default.jwt.refresh_expires_in);
-    return {
+    const returnData = {
         accessToken,
         refreshToken,
     };
+    if (role === user_1.ENUM_USER_ROLE.PRO) {
+        const personalInfo = yield personal_info_model_1.PersonalInfo.findOne({ user: _id });
+        const professionalInfo = yield professional_info_model_1.ProfessionalInfo.findOne({ user: _id });
+        const documents = yield documents_model_1.Documents.findOne({ user: _id });
+        const totalSteps = 3;
+        const completedSteps = [
+            Object.keys(personalInfo || {}).length > 0,
+            Object.keys(professionalInfo || {}).length > 0,
+            Object.keys(documents || {}).length > 0,
+        ].filter(Boolean).length;
+        const completionPercentage = (completedSteps / totalSteps) * 100;
+        returnData.completionPercentage = completionPercentage;
+    }
+    return returnData;
 });
 const loginWithGoogle = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, role, source } = payload;
@@ -114,19 +132,6 @@ const changePassword = (user, payload) => __awaiter(void 0, void 0, void 0, func
         !(yield user_model_1.User.isPasswordMatched(oldPassword, isUserExist.password))) {
         throw new ApiError_1.default(http_status_1.default.UNAUTHORIZED, 'Old Password is incorrect');
     }
-    // // hash password before saving
-    // const newHashedPassword = await bcrypt.hash(
-    //   newPassword,
-    //   Number(config.bycrypt_salt_rounds)
-    // );
-    // const query = { id: user?.userId };
-    // const updatedData = {
-    //   password: newHashedPassword,  //
-    //   needsPasswordChange: false,
-    //   passwordChangedAt: new Date(), //
-    // };
-    // await User.findOneAndUpdate(query, updatedData);
-    // data update
     isUserExist.password = password;
     // updating using save()
     isUserExist.save();

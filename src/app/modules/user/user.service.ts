@@ -8,6 +8,7 @@ import cloudinary from 'cloudinary';
 import mongoose from 'mongoose';
 import config from '../../../config';
 import { ENUM_USER_ROLE } from '../../../enums/user';
+import { CompanyInfo } from './company-info.model';
 import { Documents } from './documents.model';
 import { PersonalInfo } from './personal-info.model';
 import { ProfessionalInfo } from './professional-info.model';
@@ -55,6 +56,32 @@ const updateUser = async (
   });
   return result;
 };
+const updateOrCreateUserCompanyInformation = async (
+  payload: Partial<IUser>,
+  user: Partial<IUser>
+): Promise<IUser | null> => {
+  const { _id } = user;
+
+  console.log({ payload, user });
+
+  const isCompanyInformationExist = await CompanyInfo.findOne({
+    user: _id,
+  });
+
+  let result: any;
+
+  if (!isCompanyInformationExist) {
+    result = await CompanyInfo.create({ user: _id, ...payload });
+  }
+
+  result = await CompanyInfo.findOneAndUpdate(
+    { user: _id },
+    { $set: payload },
+    { new: true }
+  );
+
+  return result;
+};
 const updateOrCreateUserPersonalInformation = async (
   payload: Partial<IUser>,
   user: Partial<IUser>,
@@ -65,6 +92,8 @@ const updateOrCreateUserPersonalInformation = async (
   const isPersonalInformationExist = await PersonalInfo.findOne({
     user: _id,
   });
+
+  // console.log({ file, payload });
 
   if (file?.path) {
     const cloudRes = await cloudinary.v2.uploader.upload(file.path);
@@ -91,7 +120,6 @@ const updateOrCreateUserProfessionalInformation = async (
   files: any
 ): Promise<any> => {
   const { _id } = user;
-  // console.log({ _id, payload });
 
   const { certifications }: any = payload;
 
@@ -105,7 +133,7 @@ const updateOrCreateUserProfessionalInformation = async (
     }
   }
 
-  console.log('fileMap', fileMap, certifications);
+  // console.log('fileMap', fileMap, certifications);
 
   if (
     certifications &&
@@ -164,7 +192,7 @@ const updateOrCreateUserDocuments = async (
   if (Object.keys(fileMap).length > 0) {
     for (const file of Object.keys(fileMap)) {
       const cloudRes = await cloudinary.v2.uploader.upload(fileMap[file]);
-      console.log('cloudRes', cloudRes);
+      // console.log('cloudRes', cloudRes);
       fileMap[file] = cloudRes.secure_url;
     }
   }
@@ -181,7 +209,7 @@ const updateOrCreateUserDocuments = async (
     fileMap = payload;
   }
 
-  console.log('query', fileMap);
+  // console.log('query', fileMap);
 
   result = await Documents.findOneAndUpdate(
     { user: _id },
@@ -200,7 +228,6 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
         _id: new mongoose.Types.ObjectId(user._id),
       },
     },
-
     {
       $lookup: {
         from: 'personalinformations',
@@ -226,6 +253,14 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
       },
     },
     {
+      $lookup: {
+        from: 'companyinformations',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'companyInfo',
+      },
+    },
+    {
       $project: {
         email: 1,
         name: 1,
@@ -237,6 +272,7 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
         personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
         professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
         documents: { $arrayElemAt: ['$documents', 0] },
+        companyInfo: { $arrayElemAt: ['$companyInfo', 0] },
       },
     },
   ]);
@@ -281,6 +317,14 @@ const getUserById = async (id: string): Promise<IUser | null> => {
       },
     },
     {
+      $lookup: {
+        from: 'companyinformations',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'companyInfo',
+      },
+    },
+    {
       $project: {
         email: 1,
         name: 1,
@@ -292,6 +336,7 @@ const getUserById = async (id: string): Promise<IUser | null> => {
         personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
         professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
         documents: { $arrayElemAt: ['$documents', 0] },
+        companyInfo: { $arrayElemAt: ['$companyInfo', 0] },
       },
     },
   ]);
@@ -329,4 +374,5 @@ export const UserService = {
   updateOrCreateUserDocuments,
   getUserById,
   updateCoverImage,
+  updateOrCreateUserCompanyInformation,
 };

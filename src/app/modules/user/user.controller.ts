@@ -61,6 +61,21 @@ const updateOrCreateUserPersonalInformation = catchAsync(
     });
   }
 );
+const updateOrCreateUserCompanyInformation = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.updateOrCreateUserCompanyInformation(
+      req.body,
+      req.user as Partial<IUser>
+    );
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'User company information updated successfully!',
+      data: result,
+    });
+  }
+);
 const updateOrCreateUserProfessionalInformation = catchAsync(
   async (req: Request, res: Response) => {
     const data = JSON.parse(req.body.data || '{}');
@@ -148,4 +163,5 @@ export const UserController = {
   updateOrCreateUserDocuments,
   getUserById,
   updateCoverImage,
+  updateOrCreateUserCompanyInformation,
 };
