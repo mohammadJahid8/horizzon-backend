@@ -28,6 +28,12 @@ const PersonalInfoSchema = new Schema<any>(
       type: String,
       enum: ['Male', 'Female', 'Other'],
     },
+    companyName: {
+      type: String,
+    },
+    industry: {
+      type: String,
+    },
     address: {
       street: {
         type: String,

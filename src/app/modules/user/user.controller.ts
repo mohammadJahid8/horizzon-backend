@@ -127,6 +127,18 @@ const getUserProfile: RequestHandler = catchAsync(
     });
   }
 );
+const getPros: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.getPros();
+
+    sendResponse<IUser[]>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Pros retrieved successfully!',
+      data: result,
+    });
+  }
+);
 
 const getUserById: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
@@ -164,4 +176,5 @@ export const UserController = {
   getUserById,
   updateCoverImage,
   updateOrCreateUserCompanyInformation,
+  getPros,
 };

@@ -68,7 +68,6 @@ const loginUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
 const loginWithGoogle = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, role, source } = payload;
     const isUserExist = yield user_model_1.User.isUserExist(email);
-    console.log({ email, isUserExist });
     const isGoogleUser = yield user_model_1.User.isGoogleUser(email);
     if (isGoogleUser && source !== (isGoogleUser === null || isGoogleUser === void 0 ? void 0 : isGoogleUser.role)) {
         throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, `This account is associated with ${isGoogleUser === null || isGoogleUser === void 0 ? void 0 : isGoogleUser.role}! Login as ${isGoogleUser === null || isGoogleUser === void 0 ? void 0 : isGoogleUser.role} instead.`);
@@ -76,17 +75,32 @@ const loginWithGoogle = (payload) => __awaiter(void 0, void 0, void 0, function*
     if (isUserExist) {
         throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'User already exists with email!');
     }
-    const { _id } = isUserExist;
-    const accessToken = jwtHelpers_1.jwtHelpers.createToken({ email, role, _id }, config_1.default.jwt.secret, config_1.default.jwt.expires_in);
-    const refreshToken = jwtHelpers_1.jwtHelpers.createToken({ email, role, _id }, config_1.default.jwt.refresh_secret, config_1.default.jwt.refresh_expires_in);
+    let user;
     if (!isGoogleUser) {
         payload.isGoogleUser = true;
-        yield user_model_1.User.create(payload);
+        user = yield user_model_1.User.create(payload);
     }
-    return {
+    const { _id } = isUserExist || isGoogleUser || user;
+    const accessToken = jwtHelpers_1.jwtHelpers.createToken({ email, role, _id }, config_1.default.jwt.secret, config_1.default.jwt.expires_in);
+    const refreshToken = jwtHelpers_1.jwtHelpers.createToken({ email, role, _id }, config_1.default.jwt.refresh_secret, config_1.default.jwt.refresh_expires_in);
+    const returnData = {
         accessToken,
         refreshToken,
     };
+    if (role === user_1.ENUM_USER_ROLE.PRO) {
+        const personalInfo = yield personal_info_model_1.PersonalInfo.findOne({ user: _id });
+        const professionalInfo = yield professional_info_model_1.ProfessionalInfo.findOne({ user: _id });
+        const documents = yield documents_model_1.Documents.findOne({ user: _id });
+        const totalSteps = 3;
+        const completedSteps = [
+            Object.keys(personalInfo || {}).length > 0,
+            Object.keys(professionalInfo || {}).length > 0,
+            Object.keys(documents || {}).length > 0,
+        ].filter(Boolean).length;
+        const completionPercentage = (completedSteps / totalSteps) * 100;
+        returnData.completionPercentage = completionPercentage;
+    }
+    return returnData;
 });
 const refreshToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
     //verify token

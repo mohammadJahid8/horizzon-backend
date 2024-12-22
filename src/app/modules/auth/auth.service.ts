@@ -5,6 +5,7 @@ import config from '../../../config';
 import { ENUM_USER_ROLE } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
 import { jwtHelpers } from '../../../helpers/jwtHelpers';
+import { CompanyInfo } from '../user/company-info.model';
 import { Documents } from '../user/documents.model';
 import { PersonalInfo } from '../user/personal-info.model';
 import { ProfessionalInfo } from '../user/professional-info.model';
@@ -82,7 +83,24 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
       Object.keys(documents || {}).length > 0,
     ].filter(Boolean).length;
 
-    const completionPercentage = (completedSteps / totalSteps) * 100;
+    const completionPercentage = Math.floor(
+      (completedSteps / totalSteps) * 100
+    );
+    returnData.completionPercentage = completionPercentage;
+  }
+  if (role === ENUM_USER_ROLE.PARTNER) {
+    const personalInfo = await PersonalInfo.findOne({ user: _id });
+    const companyInfo = await CompanyInfo.findOne({ user: _id });
+
+    const totalSteps = 2;
+    const completedSteps = [
+      Object.keys(personalInfo || {}).length > 0,
+      Object.keys(companyInfo || {}).length > 0,
+    ].filter(Boolean).length;
+
+    const completionPercentage = Math.floor(
+      (completedSteps / totalSteps) * 100
+    );
     returnData.completionPercentage = completionPercentage;
   }
 
@@ -95,7 +113,6 @@ const loginWithGoogle = async (
   const { email, role, source } = payload;
 
   const isUserExist = await User.isUserExist(email);
-  console.log({ email, isUserExist });
 
   const isGoogleUser = await User.isGoogleUser(email);
 
@@ -113,7 +130,13 @@ const loginWithGoogle = async (
     );
   }
 
-  const { _id } = isUserExist;
+  let user;
+
+  if (!isGoogleUser) {
+    payload.isGoogleUser = true;
+    user = await User.create(payload);
+  }
+  const { _id } = isUserExist || isGoogleUser || user;
 
   const accessToken = jwtHelpers.createToken(
     { email, role, _id },
@@ -127,15 +150,28 @@ const loginWithGoogle = async (
     config.jwt.refresh_expires_in as string
   );
 
-  if (!isGoogleUser) {
-    payload.isGoogleUser = true;
-    await User.create(payload);
-  }
-
-  return {
+  const returnData: ILoginUserResponse = {
     accessToken,
     refreshToken,
   };
+
+  if (role === ENUM_USER_ROLE.PRO) {
+    const personalInfo = await PersonalInfo.findOne({ user: _id });
+    const professionalInfo = await ProfessionalInfo.findOne({ user: _id });
+    const documents = await Documents.findOne({ user: _id });
+
+    const totalSteps = 3;
+    const completedSteps = [
+      Object.keys(personalInfo || {}).length > 0,
+      Object.keys(professionalInfo || {}).length > 0,
+      Object.keys(documents || {}).length > 0,
+    ].filter(Boolean).length;
+
+    const completionPercentage = (completedSteps / totalSteps) * 100;
+    returnData.completionPercentage = completionPercentage;
+  }
+
+  return returnData;
 };
 
 const refreshToken = async (token: string): Promise<IRefreshTokenResponse> => {

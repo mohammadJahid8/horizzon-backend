@@ -47,9 +47,14 @@ router.get(
 );
 
 router.get(
-  '/:id',
+  '/profile/:id',
   auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
   UserController.getUserById
+);
+router.get(
+  '/pros',
+  auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
+  UserController.getPros
 );
 
 router.patch(

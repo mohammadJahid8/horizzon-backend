@@ -279,6 +279,75 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
 
   return result.length > 0 ? result[0] : null;
 };
+const getPros = async (): Promise<IUser[]> => {
+  const result = await User.aggregate([
+    {
+      $match: {
+        role: ENUM_USER_ROLE.PRO,
+      },
+    },
+    {
+      $lookup: {
+        from: 'personalinformations',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'personalInfo',
+      },
+    },
+    {
+      $lookup: {
+        from: 'professionalinformations',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'professionalInfo',
+      },
+    },
+    {
+      $lookup: {
+        from: 'documents',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'documents',
+      },
+    },
+    {
+      $lookup: {
+        from: 'companyinformations',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'companyInfo',
+      },
+    },
+    {
+      $project: {
+        email: 1,
+        name: 1,
+        role: 1,
+        phone: 1,
+        coverImage: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
+        professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
+        documents: { $arrayElemAt: ['$documents', 0] },
+        companyInfo: { $arrayElemAt: ['$companyInfo', 0] },
+      },
+    },
+    {
+      $match: {
+        personalInfo: { $exists: true, $ne: null },
+        professionalInfo: { $exists: true, $ne: null },
+      },
+    },
+    {
+      $sort: {
+        createdAt: 1,
+      },
+    },
+  ]);
+
+  return result;
+};
 
 const getUserById = async (id: string): Promise<IUser | null> => {
   if (!id) {
@@ -375,4 +444,5 @@ export const UserService = {
   getUserById,
   updateCoverImage,
   updateOrCreateUserCompanyInformation,
+  getPros,
 };
