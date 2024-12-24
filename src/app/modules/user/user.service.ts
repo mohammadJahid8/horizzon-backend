@@ -8,7 +8,6 @@ import cloudinary from 'cloudinary';
 import mongoose from 'mongoose';
 import config from '../../../config';
 import { ENUM_USER_ROLE } from '../../../enums/user';
-import { CompanyInfo } from './company-info.model';
 import { Documents } from './documents.model';
 import { PersonalInfo } from './personal-info.model';
 import { ProfessionalInfo } from './professional-info.model';
@@ -56,32 +55,7 @@ const updateUser = async (
   });
   return result;
 };
-const updateOrCreateUserCompanyInformation = async (
-  payload: Partial<IUser>,
-  user: Partial<IUser>
-): Promise<IUser | null> => {
-  const { _id } = user;
 
-  console.log({ payload, user });
-
-  const isCompanyInformationExist = await CompanyInfo.findOne({
-    user: _id,
-  });
-
-  let result: any;
-
-  if (!isCompanyInformationExist) {
-    result = await CompanyInfo.create({ user: _id, ...payload });
-  }
-
-  result = await CompanyInfo.findOneAndUpdate(
-    { user: _id },
-    { $set: payload },
-    { new: true }
-  );
-
-  return result;
-};
 const updateOrCreateUserPersonalInformation = async (
   payload: Partial<IUser>,
   user: Partial<IUser>,
@@ -252,14 +226,7 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
         as: 'documents',
       },
     },
-    {
-      $lookup: {
-        from: 'companyinformations',
-        localField: '_id',
-        foreignField: 'user',
-        as: 'companyInfo',
-      },
-    },
+
     {
       $project: {
         email: 1,
@@ -272,7 +239,6 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
         personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
         professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
         documents: { $arrayElemAt: ['$documents', 0] },
-        companyInfo: { $arrayElemAt: ['$companyInfo', 0] },
       },
     },
   ]);
@@ -310,14 +276,7 @@ const getPros = async (): Promise<IUser[]> => {
         as: 'documents',
       },
     },
-    {
-      $lookup: {
-        from: 'companyinformations',
-        localField: '_id',
-        foreignField: 'user',
-        as: 'companyInfo',
-      },
-    },
+
     {
       $project: {
         email: 1,
@@ -330,7 +289,6 @@ const getPros = async (): Promise<IUser[]> => {
         personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
         professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
         documents: { $arrayElemAt: ['$documents', 0] },
-        companyInfo: { $arrayElemAt: ['$companyInfo', 0] },
       },
     },
     {
@@ -385,14 +343,7 @@ const getUserById = async (id: string): Promise<IUser | null> => {
         as: 'documents',
       },
     },
-    {
-      $lookup: {
-        from: 'companyinformations',
-        localField: '_id',
-        foreignField: 'user',
-        as: 'companyInfo',
-      },
-    },
+
     {
       $project: {
         email: 1,
@@ -405,7 +356,6 @@ const getUserById = async (id: string): Promise<IUser | null> => {
         personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
         professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
         documents: { $arrayElemAt: ['$documents', 0] },
-        companyInfo: { $arrayElemAt: ['$companyInfo', 0] },
       },
     },
   ]);
@@ -443,6 +393,5 @@ export const UserService = {
   updateOrCreateUserDocuments,
   getUserById,
   updateCoverImage,
-  updateOrCreateUserCompanyInformation,
   getPros,
 };

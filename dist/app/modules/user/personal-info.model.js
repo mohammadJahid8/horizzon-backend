@@ -24,9 +24,18 @@ const PersonalInfoSchema = new mongoose_1.Schema({
     dateOfBirth: {
         type: Date,
     },
+    dateEstablished: {
+        type: Date,
+    },
     gender: {
         type: String,
         enum: ['Male', 'Female', 'Other'],
+    },
+    companyName: {
+        type: String,
+    },
+    industry: {
+        type: String,
     },
     address: {
         street: {

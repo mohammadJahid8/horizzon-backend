@@ -60,7 +60,14 @@ const loginUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
             Object.keys(professionalInfo || {}).length > 0,
             Object.keys(documents || {}).length > 0,
         ].filter(Boolean).length;
-        const completionPercentage = (completedSteps / totalSteps) * 100;
+        const completionPercentage = Math.floor((completedSteps / totalSteps) * 100);
+        returnData.completionPercentage = completionPercentage;
+    }
+    if (role === user_1.ENUM_USER_ROLE.PARTNER) {
+        const personalInfo = yield personal_info_model_1.PersonalInfo.findOne({ user: _id });
+        const totalSteps = 1;
+        const completedSteps = [Object.keys(personalInfo || {}).length > 0].filter(Boolean).length;
+        const completionPercentage = Math.floor((completedSteps / totalSteps) * 100);
         returnData.completionPercentage = completionPercentage;
     }
     return returnData;

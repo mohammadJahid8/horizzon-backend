@@ -30,6 +30,15 @@ const globalErrorHandler: ErrorRequestHandler = (
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
     errorMessages = simplifiedError.errorMessages;
+  } else if (error.name === 'TokenExpiredError') {
+    statusCode = 401;
+    message = 'Token expired';
+    errorMessages = [
+      {
+        path: '',
+        message: 'JWT Token expired',
+      },
+    ];
   } else if (error instanceof ZodError) {
     const simplifiedError = handleZodError(error);
     statusCode = simplifiedError.statusCode;

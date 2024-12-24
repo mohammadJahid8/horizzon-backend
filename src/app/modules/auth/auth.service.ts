@@ -5,7 +5,6 @@ import config from '../../../config';
 import { ENUM_USER_ROLE } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
 import { jwtHelpers } from '../../../helpers/jwtHelpers';
-import { CompanyInfo } from '../user/company-info.model';
 import { Documents } from '../user/documents.model';
 import { PersonalInfo } from '../user/personal-info.model';
 import { ProfessionalInfo } from '../user/professional-info.model';
@@ -90,13 +89,11 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
   }
   if (role === ENUM_USER_ROLE.PARTNER) {
     const personalInfo = await PersonalInfo.findOne({ user: _id });
-    const companyInfo = await CompanyInfo.findOne({ user: _id });
 
-    const totalSteps = 2;
-    const completedSteps = [
-      Object.keys(personalInfo || {}).length > 0,
-      Object.keys(companyInfo || {}).length > 0,
-    ].filter(Boolean).length;
+    const totalSteps = 1;
+    const completedSteps = [Object.keys(personalInfo || {}).length > 0].filter(
+      Boolean
+    ).length;
 
     const completionPercentage = Math.floor(
       (completedSteps / totalSteps) * 100

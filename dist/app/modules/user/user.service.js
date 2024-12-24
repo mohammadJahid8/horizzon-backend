@@ -20,7 +20,6 @@ const cloudinary_1 = __importDefault(require("cloudinary"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const config_1 = __importDefault(require("../../../config"));
 const user_1 = require("../../../enums/user");
-const company_info_model_1 = require("./company-info.model");
 const documents_model_1 = require("./documents.model");
 const personal_info_model_1 = require("./personal-info.model");
 const professional_info_model_1 = require("./professional-info.model");
@@ -54,19 +53,6 @@ const updateUser = (payload, user
     const result = yield user_model_1.User.findOneAndUpdate({ email: user.email }, payload, {
         new: true,
     });
-    return result;
-});
-const updateOrCreateUserCompanyInformation = (payload, user) => __awaiter(void 0, void 0, void 0, function* () {
-    const { _id } = user;
-    console.log({ payload, user });
-    const isCompanyInformationExist = yield company_info_model_1.CompanyInfo.findOne({
-        user: _id,
-    });
-    let result;
-    if (!isCompanyInformationExist) {
-        result = yield company_info_model_1.CompanyInfo.create(Object.assign({ user: _id }, payload));
-    }
-    result = yield company_info_model_1.CompanyInfo.findOneAndUpdate({ user: _id }, { $set: payload }, { new: true });
     return result;
 });
 const updateOrCreateUserPersonalInformation = (payload, user, file) => __awaiter(void 0, void 0, void 0, function* () {
@@ -183,11 +169,51 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
             },
         },
         {
+            $project: {
+                email: 1,
+                name: 1,
+                role: 1,
+                phone: 1,
+                coverImage: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
+                professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
+                documents: { $arrayElemAt: ['$documents', 0] },
+            },
+        },
+    ]);
+    return result.length > 0 ? result[0] : null;
+});
+const getPros = () => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_model_1.User.aggregate([
+        {
+            $match: {
+                role: user_1.ENUM_USER_ROLE.PRO,
+            },
+        },
+        {
             $lookup: {
-                from: 'companyinformations',
+                from: 'personalinformations',
                 localField: '_id',
                 foreignField: 'user',
-                as: 'companyInfo',
+                as: 'personalInfo',
+            },
+        },
+        {
+            $lookup: {
+                from: 'professionalinformations',
+                localField: '_id',
+                foreignField: 'user',
+                as: 'professionalInfo',
+            },
+        },
+        {
+            $lookup: {
+                from: 'documents',
+                localField: '_id',
+                foreignField: 'user',
+                as: 'documents',
             },
         },
         {
@@ -202,11 +228,21 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
                 personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
                 professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
                 documents: { $arrayElemAt: ['$documents', 0] },
-                companyInfo: { $arrayElemAt: ['$companyInfo', 0] },
+            },
+        },
+        {
+            $match: {
+                personalInfo: { $exists: true, $ne: null },
+                professionalInfo: { $exists: true, $ne: null },
+            },
+        },
+        {
+            $sort: {
+                createdAt: 1,
             },
         },
     ]);
-    return result.length > 0 ? result[0] : null;
+    return result;
 });
 const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     if (!id) {
@@ -243,14 +279,6 @@ const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
             },
         },
         {
-            $lookup: {
-                from: 'companyinformations',
-                localField: '_id',
-                foreignField: 'user',
-                as: 'companyInfo',
-            },
-        },
-        {
             $project: {
                 email: 1,
                 name: 1,
@@ -262,7 +290,6 @@ const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
                 personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
                 professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
                 documents: { $arrayElemAt: ['$documents', 0] },
-                companyInfo: { $arrayElemAt: ['$companyInfo', 0] },
             },
         },
     ]);
@@ -288,5 +315,5 @@ exports.UserService = {
     updateOrCreateUserDocuments,
     getUserById,
     updateCoverImage,
-    updateOrCreateUserCompanyInformation,
+    getPros,
 };

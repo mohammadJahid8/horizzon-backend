@@ -24,6 +24,9 @@ const PersonalInfoSchema = new Schema<any>(
     dateOfBirth: {
       type: Date,
     },
+    dateEstablished: {
+      type: Date,
+    },
     gender: {
       type: String,
       enum: ['Male', 'Female', 'Other'],
