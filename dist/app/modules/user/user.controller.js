@@ -18,6 +18,15 @@ const ApiError_1 = __importDefault(require("../../../errors/ApiError"));
 const catchAsync_1 = __importDefault(require("../../../shared/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../../shared/sendResponse"));
 const user_service_1 = require("./user.service");
+const joinWaitlist = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.joinWaitlist(req.body.email);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'You have been added to the waitlist!',
+        data: result,
+    });
+}));
 const createUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield user_service_1.UserService.createUser(req.body);
     (0, sendResponse_1.default)(res, {
@@ -120,4 +129,5 @@ exports.UserController = {
     getUserById,
     updateCoverImage,
     getPros,
+    joinWaitlist,
 };

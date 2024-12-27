@@ -10,6 +10,7 @@ const storage = multer.diskStorage({});
 const upload = multer({ storage });
 
 router.post('/signup', UserController.createUser);
+router.post('/waitlist', UserController.joinWaitlist);
 
 router.patch(
   '/personal-information',

@@ -7,6 +7,18 @@ import sendResponse from '../../../shared/sendResponse';
 import { IUser } from './user.interface';
 import { UserService } from './user.service';
 
+const joinWaitlist: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.joinWaitlist(req.body.email);
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'You have been added to the waitlist!',
+      data: result,
+    });
+  }
+);
 const createUser: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
     const result = await UserService.createUser(req.body);
@@ -162,4 +174,5 @@ export const UserController = {
   getUserById,
   updateCoverImage,
   getPros,
+  joinWaitlist,
 };

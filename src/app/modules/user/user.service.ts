@@ -8,14 +8,36 @@ import cloudinary from 'cloudinary';
 import mongoose from 'mongoose';
 import config from '../../../config';
 import { ENUM_USER_ROLE } from '../../../enums/user';
+import { sendEmail } from '../auth/sendMail';
 import { Documents } from './documents.model';
 import { PersonalInfo } from './personal-info.model';
 import { ProfessionalInfo } from './professional-info.model';
+import { Waitlist } from './waitlist.model';
 cloudinary.v2.config({
   cloud_name: config.cloudinary.cloud_name,
   api_key: config.cloudinary.api_key,
   api_secret: config.cloudinary.api_secret,
 });
+
+const joinWaitlist = async (email: string) => {
+  const existingUser = await Waitlist.findOne({ email });
+  if (existingUser) {
+    throw new ApiError(500, 'You are already in the waitlist!');
+  }
+
+  const newUser = await Waitlist.create({ email });
+  sendEmail(
+    'mohammadjahid0007@gmail.com',
+    'Waitlist Update',
+    `
+      <div>
+        <p>New user has joined the waitlist: <strong>${email}</strong></p>
+        <p>Thank you</p>
+      </div>
+    `
+  );
+  return newUser;
+};
 
 const createUser = async (user: Partial<IUser>): Promise<IUser | null> => {
   const existingUser = await User.isUserExist(user.email as string);
@@ -394,4 +416,5 @@ export const UserService = {
   getUserById,
   updateCoverImage,
   getPros,
+  joinWaitlist,
 };

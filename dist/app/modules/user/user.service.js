@@ -20,13 +20,29 @@ const cloudinary_1 = __importDefault(require("cloudinary"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const config_1 = __importDefault(require("../../../config"));
 const user_1 = require("../../../enums/user");
+const sendMail_1 = require("../auth/sendMail");
 const documents_model_1 = require("./documents.model");
 const personal_info_model_1 = require("./personal-info.model");
 const professional_info_model_1 = require("./professional-info.model");
+const waitlist_model_1 = require("./waitlist.model");
 cloudinary_1.default.v2.config({
     cloud_name: config_1.default.cloudinary.cloud_name,
     api_key: config_1.default.cloudinary.api_key,
     api_secret: config_1.default.cloudinary.api_secret,
+});
+const joinWaitlist = (email) => __awaiter(void 0, void 0, void 0, function* () {
+    const existingUser = yield waitlist_model_1.Waitlist.findOne({ email });
+    if (existingUser) {
+        throw new ApiError_1.default(500, 'You are already in the waitlist!');
+    }
+    const newUser = yield waitlist_model_1.Waitlist.create({ email });
+    (0, sendMail_1.sendEmail)('mohammadjahid0007@gmail.com', 'Waitlist Update', `
+      <div>
+        <p>New user has joined the waitlist: <strong>${email}</strong></p>
+        <p>Thank you</p>
+      </div>
+    `);
+    return newUser;
 });
 const createUser = (user) => __awaiter(void 0, void 0, void 0, function* () {
     const existingUser = yield user_model_1.User.isUserExist(user.email);
@@ -316,4 +332,5 @@ exports.UserService = {
     getUserById,
     updateCoverImage,
     getPros,
+    joinWaitlist,
 };

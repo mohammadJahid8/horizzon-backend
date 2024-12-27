@@ -23,7 +23,7 @@ const documents_model_1 = require("../user/documents.model");
 const personal_info_model_1 = require("../user/personal-info.model");
 const professional_info_model_1 = require("../user/professional-info.model");
 const user_model_1 = require("../user/user.model");
-const sendResetMail_1 = require("./sendResetMail");
+const sendMail_1 = require("./sendMail");
 const loginUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { email, password, source } = payload;
     const isUserExist = yield user_model_1.User.isUserExist(email);
@@ -172,7 +172,7 @@ const forgotPass = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     // Save OTP and its expiration in the user's record
     yield user_model_1.User.updateOne({ email: user.email }, { otp, otpExpiry });
     // Send the OTP to the user's email
-    yield (0, sendResetMail_1.sendEmail)(user.email, `
+    yield (0, sendMail_1.sendEmail)(user.email, 'Reset Password', `
       <div>
         <p>Your OTP for password reset is: <strong>${otp}</strong></p>
         <p>This OTP is valid for 2 minutes.</p>

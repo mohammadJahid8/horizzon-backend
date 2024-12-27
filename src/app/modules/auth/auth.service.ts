@@ -15,7 +15,7 @@ import {
   ILoginUserResponse,
   IRefreshTokenResponse,
 } from './auth.interface';
-import { sendEmail } from './sendResetMail';
+import { sendEmail } from './sendMail';
 
 const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
   const { email, password, source } = payload;
@@ -280,6 +280,7 @@ const forgotPass = async (payload: { email: string }) => {
   // Send the OTP to the user's email
   await sendEmail(
     user.email,
+    'Reset Password',
     `
       <div>
         <p>Your OTP for password reset is: <strong>${otp}</strong></p>

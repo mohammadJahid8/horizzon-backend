@@ -13,6 +13,7 @@ const router = express_1.default.Router();
 const storage = multer_1.default.diskStorage({});
 const upload = (0, multer_1.default)({ storage });
 router.post('/signup', user_controller_1.UserController.createUser);
+router.post('/waitlist', user_controller_1.UserController.joinWaitlist);
 router.patch('/personal-information', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), upload.single('image'), user_controller_1.UserController.updateOrCreateUserPersonalInformation);
 router.patch('/professional-information', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), upload.array(`certifications`), user_controller_1.UserController.updateOrCreateUserProfessionalInformation);
 router.patch('/documents', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), upload.fields([
