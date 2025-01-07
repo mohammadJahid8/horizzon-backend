@@ -27,12 +27,13 @@ function sendEmail(to, subject, html) {
                     pass: config_1.default.appPass,
                 },
             });
-            yield transporter.sendMail({
+            const result = yield transporter.sendMail({
                 from: config_1.default.email, // sender address
                 to, // list of receivers
                 subject, // Subject line
                 html, // html body
             });
+            return result;
         }
         catch (error) {
             console.error('Error sending email:', error);

@@ -18,6 +18,7 @@ const http_status_1 = __importDefault(require("http-status"));
 const config_1 = __importDefault(require("../../../config"));
 const user_1 = require("../../../enums/user");
 const ApiError_1 = __importDefault(require("../../../errors/ApiError"));
+const calculatePartnerPercentage_1 = require("../../../helpers/calculatePartnerPercentage");
 const jwtHelpers_1 = require("../../../helpers/jwtHelpers");
 const documents_model_1 = require("../user/documents.model");
 const personal_info_model_1 = require("../user/personal-info.model");
@@ -50,8 +51,8 @@ const loginUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
         accessToken,
         refreshToken,
     };
+    const personalInfo = yield personal_info_model_1.PersonalInfo.findOne({ user: _id });
     if (role === user_1.ENUM_USER_ROLE.PRO) {
-        const personalInfo = yield personal_info_model_1.PersonalInfo.findOne({ user: _id });
         const professionalInfo = yield professional_info_model_1.ProfessionalInfo.findOne({ user: _id });
         const documents = yield documents_model_1.Documents.findOne({ user: _id });
         const totalSteps = 3;
@@ -64,11 +65,17 @@ const loginUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
         returnData.completionPercentage = completionPercentage;
     }
     if (role === user_1.ENUM_USER_ROLE.PARTNER) {
-        const personalInfo = yield personal_info_model_1.PersonalInfo.findOne({ user: _id });
-        const totalSteps = 1;
-        const completedSteps = [Object.keys(personalInfo || {}).length > 0].filter(Boolean).length;
-        const completionPercentage = Math.floor((completedSteps / totalSteps) * 100);
-        returnData.completionPercentage = completionPercentage;
+        const fields = [
+            'image',
+            'firstName',
+            'lastName',
+            'bio',
+            'dateOfBirth',
+            'companyName',
+            'industry',
+            'address',
+        ];
+        returnData.completionPercentage = (0, calculatePartnerPercentage_1.calculatePartnerPercentage)(fields, personalInfo);
     }
     return returnData;
 });
@@ -94,8 +101,8 @@ const loginWithGoogle = (payload) => __awaiter(void 0, void 0, void 0, function*
         accessToken,
         refreshToken,
     };
+    const personalInfo = yield personal_info_model_1.PersonalInfo.findOne({ user: _id });
     if (role === user_1.ENUM_USER_ROLE.PRO) {
-        const personalInfo = yield personal_info_model_1.PersonalInfo.findOne({ user: _id });
         const professionalInfo = yield professional_info_model_1.ProfessionalInfo.findOne({ user: _id });
         const documents = yield documents_model_1.Documents.findOne({ user: _id });
         const totalSteps = 3;
@@ -106,6 +113,19 @@ const loginWithGoogle = (payload) => __awaiter(void 0, void 0, void 0, function*
         ].filter(Boolean).length;
         const completionPercentage = (completedSteps / totalSteps) * 100;
         returnData.completionPercentage = completionPercentage;
+    }
+    if (role === user_1.ENUM_USER_ROLE.PARTNER) {
+        const fields = [
+            'image',
+            'firstName',
+            'lastName',
+            'bio',
+            'dateOfBirth',
+            'companyName',
+            'industry',
+            'address',
+        ];
+        returnData.completionPercentage = (0, calculatePartnerPercentage_1.calculatePartnerPercentage)(fields, personalInfo);
     }
     return returnData;
 });

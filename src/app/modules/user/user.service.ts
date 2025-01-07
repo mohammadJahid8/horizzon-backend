@@ -8,6 +8,7 @@ import cloudinary from 'cloudinary';
 import mongoose from 'mongoose';
 import config from '../../../config';
 import { ENUM_USER_ROLE } from '../../../enums/user';
+import { calculatePartnerPercentage } from '../../../helpers/calculatePartnerPercentage';
 import { sendEmail } from '../auth/sendMail';
 import { Documents } from './documents.model';
 import { PersonalInfo } from './personal-info.model';
@@ -26,8 +27,8 @@ const joinWaitlist = async (email: string) => {
   }
 
   const newUser = await Waitlist.create({ email });
-  sendEmail(
-    'mohammadjahid0007@gmail.com',
+  await sendEmail(
+    'alfonza@joinhorizzon.com',
     'Waitlist Update',
     `
       <div>
@@ -217,6 +218,39 @@ const updateOrCreateUserDocuments = async (
 };
 
 const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
+  const { _id, role } = user;
+
+  const personalInfo = await PersonalInfo.findOne({ user: _id });
+
+  let completionPercentage = 0;
+
+  if (role === ENUM_USER_ROLE.PRO) {
+    const professionalInfo = await ProfessionalInfo.findOne({ user: _id });
+    const documents = await Documents.findOne({ user: _id });
+
+    const totalSteps = 3;
+    const completedSteps = [
+      Object.keys(personalInfo || {}).length > 0,
+      Object.keys(professionalInfo || {}).length > 0,
+      Object.keys(documents || {}).length > 0,
+    ].filter(Boolean).length;
+
+    completionPercentage = Math.floor((completedSteps / totalSteps) * 100);
+  }
+  if (role === ENUM_USER_ROLE.PARTNER) {
+    const fields = [
+      'image',
+      'firstName',
+      'lastName',
+      'bio',
+      'dateOfBirth',
+      'companyName',
+      'industry',
+      'address',
+    ];
+    completionPercentage = calculatePartnerPercentage(fields, personalInfo);
+  }
+
   const result = await User.aggregate([
     {
       $match: {
@@ -252,7 +286,6 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
     {
       $project: {
         email: 1,
-        name: 1,
         role: 1,
         phone: 1,
         coverImage: 1,
@@ -261,6 +294,18 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
         personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
         professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
         documents: { $arrayElemAt: ['$documents', 0] },
+        completionPercentage: {
+          $cond: {
+            if: {
+              $or: [
+                { $eq: [role, ENUM_USER_ROLE.PRO] },
+                { $eq: [role, ENUM_USER_ROLE.PARTNER] },
+              ],
+            },
+            then: completionPercentage,
+            else: 0,
+          },
+        },
       },
     },
   ]);

@@ -4,6 +4,7 @@ import { JwtPayload, Secret } from 'jsonwebtoken';
 import config from '../../../config';
 import { ENUM_USER_ROLE } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
+import { calculatePartnerPercentage } from '../../../helpers/calculatePartnerPercentage';
 import { jwtHelpers } from '../../../helpers/jwtHelpers';
 import { Documents } from '../user/documents.model';
 import { PersonalInfo } from '../user/personal-info.model';
@@ -70,8 +71,8 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
     refreshToken,
   };
 
+  const personalInfo = await PersonalInfo.findOne({ user: _id });
   if (role === ENUM_USER_ROLE.PRO) {
-    const personalInfo = await PersonalInfo.findOne({ user: _id });
     const professionalInfo = await ProfessionalInfo.findOne({ user: _id });
     const documents = await Documents.findOne({ user: _id });
 
@@ -87,18 +88,22 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
     );
     returnData.completionPercentage = completionPercentage;
   }
+
   if (role === ENUM_USER_ROLE.PARTNER) {
-    const personalInfo = await PersonalInfo.findOne({ user: _id });
-
-    const totalSteps = 1;
-    const completedSteps = [Object.keys(personalInfo || {}).length > 0].filter(
-      Boolean
-    ).length;
-
-    const completionPercentage = Math.floor(
-      (completedSteps / totalSteps) * 100
+    const fields = [
+      'image',
+      'firstName',
+      'lastName',
+      'bio',
+      'dateOfBirth',
+      'companyName',
+      'industry',
+      'address',
+    ];
+    returnData.completionPercentage = calculatePartnerPercentage(
+      fields,
+      personalInfo
     );
-    returnData.completionPercentage = completionPercentage;
   }
 
   return returnData;
@@ -152,8 +157,8 @@ const loginWithGoogle = async (
     refreshToken,
   };
 
+  const personalInfo = await PersonalInfo.findOne({ user: _id });
   if (role === ENUM_USER_ROLE.PRO) {
-    const personalInfo = await PersonalInfo.findOne({ user: _id });
     const professionalInfo = await ProfessionalInfo.findOne({ user: _id });
     const documents = await Documents.findOne({ user: _id });
 
@@ -166,6 +171,23 @@ const loginWithGoogle = async (
 
     const completionPercentage = (completedSteps / totalSteps) * 100;
     returnData.completionPercentage = completionPercentage;
+  }
+
+  if (role === ENUM_USER_ROLE.PARTNER) {
+    const fields = [
+      'image',
+      'firstName',
+      'lastName',
+      'bio',
+      'dateOfBirth',
+      'companyName',
+      'industry',
+      'address',
+    ];
+    returnData.completionPercentage = calculatePartnerPercentage(
+      fields,
+      personalInfo
+    );
   }
 
   return returnData;

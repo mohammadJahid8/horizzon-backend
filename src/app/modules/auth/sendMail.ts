@@ -13,12 +13,13 @@ export async function sendEmail(to: string, subject: string, html: string) {
       },
     });
 
-    await transporter.sendMail({
+    const result = await transporter.sendMail({
       from: config.email, // sender address
       to, // list of receivers
       subject, // Subject line
       html, // html body
     });
+    return result;
   } catch (error) {
     console.error('Error sending email:', error);
     throw new Error('Failed to send email');

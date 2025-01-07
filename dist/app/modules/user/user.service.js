@@ -20,6 +20,7 @@ const cloudinary_1 = __importDefault(require("cloudinary"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const config_1 = __importDefault(require("../../../config"));
 const user_1 = require("../../../enums/user");
+const calculatePartnerPercentage_1 = require("../../../helpers/calculatePartnerPercentage");
 const sendMail_1 = require("../auth/sendMail");
 const documents_model_1 = require("./documents.model");
 const personal_info_model_1 = require("./personal-info.model");
@@ -36,7 +37,7 @@ const joinWaitlist = (email) => __awaiter(void 0, void 0, void 0, function* () {
         throw new ApiError_1.default(500, 'You are already in the waitlist!');
     }
     const newUser = yield waitlist_model_1.Waitlist.create({ email });
-    (0, sendMail_1.sendEmail)('mohammadjahid0007@gmail.com', 'Waitlist Update', `
+    yield (0, sendMail_1.sendEmail)('alfonza@joinhorizzon.com', 'Waitlist Update', `
       <div>
         <p>New user has joined the waitlist: <strong>${email}</strong></p>
         <p>Thank you</p>
@@ -153,6 +154,33 @@ const updateOrCreateUserDocuments = (user, files, payload) => __awaiter(void 0, 
     return result;
 });
 const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () {
+    const { _id, role } = user;
+    const personalInfo = yield personal_info_model_1.PersonalInfo.findOne({ user: _id });
+    let completionPercentage = 0;
+    if (role === user_1.ENUM_USER_ROLE.PRO) {
+        const professionalInfo = yield professional_info_model_1.ProfessionalInfo.findOne({ user: _id });
+        const documents = yield documents_model_1.Documents.findOne({ user: _id });
+        const totalSteps = 3;
+        const completedSteps = [
+            Object.keys(personalInfo || {}).length > 0,
+            Object.keys(professionalInfo || {}).length > 0,
+            Object.keys(documents || {}).length > 0,
+        ].filter(Boolean).length;
+        completionPercentage = Math.floor((completedSteps / totalSteps) * 100);
+    }
+    if (role === user_1.ENUM_USER_ROLE.PARTNER) {
+        const fields = [
+            'image',
+            'firstName',
+            'lastName',
+            'bio',
+            'dateOfBirth',
+            'companyName',
+            'industry',
+            'address',
+        ];
+        completionPercentage = (0, calculatePartnerPercentage_1.calculatePartnerPercentage)(fields, personalInfo);
+    }
     const result = yield user_model_1.User.aggregate([
         {
             $match: {
@@ -187,7 +215,6 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
         {
             $project: {
                 email: 1,
-                name: 1,
                 role: 1,
                 phone: 1,
                 coverImage: 1,
@@ -196,6 +223,18 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
                 personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
                 professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
                 documents: { $arrayElemAt: ['$documents', 0] },
+                completionPercentage: {
+                    $cond: {
+                        if: {
+                            $or: [
+                                { $eq: [role, user_1.ENUM_USER_ROLE.PRO] },
+                                { $eq: [role, user_1.ENUM_USER_ROLE.PARTNER] },
+                            ],
+                        },
+                        then: completionPercentage,
+                        else: 0,
+                    },
+                },
             },
         },
     ]);
