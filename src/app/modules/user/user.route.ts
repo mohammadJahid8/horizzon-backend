@@ -65,4 +65,16 @@ router.patch(
   UserController.updateCoverImage
 );
 
+router.post('/offer', auth(ENUM_USER_ROLE.PARTNER), UserController.createOffer);
+router.get(
+  '/offer',
+  auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
+  UserController.getOffers
+);
+router.delete(
+  '/offer/:id',
+  auth(ENUM_USER_ROLE.PARTNER),
+  UserController.deleteOffer
+);
+
 export const UserRoutes = router;

@@ -11,6 +11,7 @@ import { ENUM_USER_ROLE } from '../../../enums/user';
 import { calculatePartnerPercentage } from '../../../helpers/calculatePartnerPercentage';
 import { sendEmail } from '../auth/sendMail';
 import { Documents } from './documents.model';
+import { Offer } from './offer.model';
 import { PersonalInfo } from './personal-info.model';
 import { ProfessionalInfo } from './professional-info.model';
 import { Waitlist } from './waitlist.model';
@@ -451,6 +452,107 @@ const updateCoverImage = async (
   return result;
 };
 
+const createOffer = async (
+  payload: any,
+  user: Partial<IUser>
+): Promise<any> => {
+  const result = await Offer.create({ ...payload, partner: user._id });
+  return result;
+};
+
+const getOffers = async (user: Partial<IUser>): Promise<any> => {
+  const result = await Offer.aggregate([
+    {
+      $match: {
+        [user.role as string]: new mongoose.Types.ObjectId(user._id),
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'pro',
+        foreignField: '_id',
+        as: 'pro',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'personalinformations',
+              localField: '_id',
+              foreignField: 'user',
+              as: 'personalInfo',
+            },
+          },
+          {
+            $lookup: {
+              from: 'professionalinformations',
+              localField: '_id',
+              foreignField: 'user',
+              as: 'professionalInfo',
+            },
+          },
+          {
+            $lookup: {
+              from: 'documents',
+              localField: '_id',
+              foreignField: 'user',
+              as: 'documents',
+            },
+          },
+          {
+            $addFields: {
+              personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
+              professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
+              documents: { $arrayElemAt: ['$documents', 0] },
+            },
+          },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'partner',
+        foreignField: '_id',
+        as: 'partner',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'personalinformations',
+              localField: '_id',
+              foreignField: 'user',
+              as: 'personalInfo',
+            },
+          },
+          {
+            $addFields: {
+              personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
+            },
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        pro: { $arrayElemAt: ['$pro', 0] },
+        partner: { $arrayElemAt: ['$partner', 0] },
+        notes: 1,
+        documentsNeeded: 1,
+        status: 1,
+        jobLink: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    },
+  ]);
+
+  return result;
+};
+
+const deleteOffer = async (id: string): Promise<any> => {
+  const result = await Offer.findByIdAndDelete(id);
+  return result;
+};
+
 export const UserService = {
   createUser,
   updateUser,
@@ -462,4 +564,7 @@ export const UserService = {
   updateCoverImage,
   getPros,
   joinWaitlist,
+  createOffer,
+  getOffers,
+  deleteOffer,
 };

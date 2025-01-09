@@ -119,6 +119,33 @@ const updateCoverImage = (0, catchAsync_1.default)((req, res) => __awaiter(void 
         data: result,
     });
 }));
+const createOffer = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.createOffer(req.body, req.user);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Offer created successfully!',
+        data: result,
+    });
+}));
+const getOffers = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.getOffers(req.user);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Offer created successfully!',
+        data: result,
+    });
+}));
+const deleteOffer = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.deleteOffer(req.params.id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Offer deleted successfully!',
+        data: result,
+    });
+}));
 exports.UserController = {
     createUser,
     updateUser,
@@ -130,4 +157,7 @@ exports.UserController = {
     updateCoverImage,
     getPros,
     joinWaitlist,
+    createOffer,
+    getOffers,
+    deleteOffer,
 };

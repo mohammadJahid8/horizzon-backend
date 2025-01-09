@@ -164,6 +164,46 @@ const updateCoverImage: RequestHandler = catchAsync(
   }
 );
 
+const createOffer: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.createOffer(
+      req.body,
+      req.user as Partial<IUser>
+    );
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Offer created successfully!',
+      data: result,
+    });
+  }
+);
+const getOffers: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.getOffers(req.user as Partial<IUser>);
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Offer created successfully!',
+      data: result,
+    });
+  }
+);
+const deleteOffer: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.deleteOffer(req.params.id);
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Offer deleted successfully!',
+      data: result,
+    });
+  }
+);
+
 export const UserController = {
   createUser,
   updateUser,
@@ -175,4 +215,7 @@ export const UserController = {
   updateCoverImage,
   getPros,
   joinWaitlist,
+  createOffer,
+  getOffers,
+  deleteOffer,
 };

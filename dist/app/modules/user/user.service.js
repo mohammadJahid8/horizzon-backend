@@ -23,6 +23,7 @@ const user_1 = require("../../../enums/user");
 const calculatePartnerPercentage_1 = require("../../../helpers/calculatePartnerPercentage");
 const sendMail_1 = require("../auth/sendMail");
 const documents_model_1 = require("./documents.model");
+const offer_model_1 = require("./offer.model");
 const personal_info_model_1 = require("./personal-info.model");
 const professional_info_model_1 = require("./professional-info.model");
 const waitlist_model_1 = require("./waitlist.model");
@@ -361,6 +362,100 @@ const updateCoverImage = (id, file) => __awaiter(void 0, void 0, void 0, functio
     const result = yield user_model_1.User.findByIdAndUpdate(id, { coverImage: cloudRes.secure_url }, { new: true });
     return result;
 });
+const createOffer = (payload, user) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield offer_model_1.Offer.create(Object.assign(Object.assign({}, payload), { partner: user._id }));
+    return result;
+});
+const getOffers = (user) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield offer_model_1.Offer.aggregate([
+        {
+            $match: {
+                [user.role]: new mongoose_1.default.Types.ObjectId(user._id),
+            },
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'pro',
+                foreignField: '_id',
+                as: 'pro',
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: 'personalinformations',
+                            localField: '_id',
+                            foreignField: 'user',
+                            as: 'personalInfo',
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: 'professionalinformations',
+                            localField: '_id',
+                            foreignField: 'user',
+                            as: 'professionalInfo',
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: 'documents',
+                            localField: '_id',
+                            foreignField: 'user',
+                            as: 'documents',
+                        },
+                    },
+                    {
+                        $addFields: {
+                            personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
+                            professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
+                            documents: { $arrayElemAt: ['$documents', 0] },
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'partner',
+                foreignField: '_id',
+                as: 'partner',
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: 'personalinformations',
+                            localField: '_id',
+                            foreignField: 'user',
+                            as: 'personalInfo',
+                        },
+                    },
+                    {
+                        $addFields: {
+                            personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
+                        },
+                    },
+                ],
+            },
+        },
+        {
+            $project: {
+                pro: { $arrayElemAt: ['$pro', 0] },
+                partner: { $arrayElemAt: ['$partner', 0] },
+                notes: 1,
+                documentsNeeded: 1,
+                status: 1,
+                jobLink: 1,
+                createdAt: 1,
+                updatedAt: 1,
+            },
+        },
+    ]);
+    return result;
+});
+const deleteOffer = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield offer_model_1.Offer.findByIdAndDelete(id);
+    return result;
+});
 exports.UserService = {
     createUser,
     updateUser,
@@ -372,4 +467,7 @@ exports.UserService = {
     updateCoverImage,
     getPros,
     joinWaitlist,
+    createOffer,
+    getOffers,
+    deleteOffer,
 };
