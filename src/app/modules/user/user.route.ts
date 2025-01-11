@@ -49,7 +49,7 @@ router.get(
 
 router.get(
   '/profile/:id',
-  auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
+  // auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
   UserController.getUserById
 );
 router.get(

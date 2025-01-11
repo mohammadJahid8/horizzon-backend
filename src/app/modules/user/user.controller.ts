@@ -140,6 +140,7 @@ const getPros: RequestHandler = catchAsync(
 
 const getUserById: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
+    console.log('result', req.params.id);
     const result = await UserService.getUserById(req.params.id);
 
     sendResponse<IUser>(res, {
