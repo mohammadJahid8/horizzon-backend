@@ -52,11 +52,7 @@ router.get(
   // auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
   UserController.getUserById
 );
-router.get(
-  '/pros',
-  auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
-  UserController.getPros
-);
+router.get('/pros', auth(ENUM_USER_ROLE.PARTNER), UserController.getPros);
 
 router.patch(
   '/cover-image',
@@ -65,7 +61,11 @@ router.patch(
   UserController.updateCoverImage
 );
 
-router.post('/offer', auth(ENUM_USER_ROLE.PARTNER), UserController.createOffer);
+router.post(
+  '/offer',
+  auth(ENUM_USER_ROLE.PARTNER),
+  UserController.createOrUpdateOffer
+);
 router.get(
   '/offer',
   auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
@@ -75,6 +75,12 @@ router.delete(
   '/offer/:id',
   auth(ENUM_USER_ROLE.PARTNER),
   UserController.deleteOffer
+);
+
+router.post(
+  '/store-pro',
+  auth(ENUM_USER_ROLE.PARTNER),
+  UserController.storePro
 );
 
 export const UserRoutes = router;

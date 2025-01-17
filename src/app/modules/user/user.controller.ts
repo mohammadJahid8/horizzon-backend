@@ -127,7 +127,7 @@ const getUserProfile: RequestHandler = catchAsync(
 );
 const getPros: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
-    const result = await UserService.getPros();
+    const result = await UserService.getPros(req.user as Partial<IUser>);
 
     sendResponse<IUser[]>(res, {
       statusCode: httpStatus.OK,
@@ -165,9 +165,9 @@ const updateCoverImage: RequestHandler = catchAsync(
   }
 );
 
-const createOffer: RequestHandler = catchAsync(
+const createOrUpdateOffer: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
-    const result = await UserService.createOffer(
+    const result = await UserService.createOrUpdateOffer(
       req.body,
       req.user as Partial<IUser>
     );
@@ -205,6 +205,22 @@ const deleteOffer: RequestHandler = catchAsync(
   }
 );
 
+const storePro: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.storePro(
+      req.body,
+      req.user as Partial<IUser>
+    );
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Pro stored successfully!',
+      data: result,
+    });
+  }
+);
+
 export const UserController = {
   createUser,
   updateUser,
@@ -216,7 +232,8 @@ export const UserController = {
   updateCoverImage,
   getPros,
   joinWaitlist,
-  createOffer,
+  createOrUpdateOffer,
   getOffers,
   deleteOffer,
+  storePro,
 };

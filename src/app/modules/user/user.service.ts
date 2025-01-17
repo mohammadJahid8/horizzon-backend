@@ -13,6 +13,7 @@ import { sendEmail } from '../auth/sendMail';
 import { Documents } from './documents.model';
 import { Offer } from './offer.model';
 import { PersonalInfo } from './personal-info.model';
+import { Pro } from './pro.model';
 import { ProfessionalInfo } from './professional-info.model';
 import { Waitlist } from './waitlist.model';
 cloudinary.v2.config({
@@ -313,67 +314,6 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
 
   return result.length > 0 ? result[0] : null;
 };
-const getPros = async (): Promise<IUser[]> => {
-  const result = await User.aggregate([
-    {
-      $match: {
-        role: ENUM_USER_ROLE.PRO,
-      },
-    },
-    {
-      $lookup: {
-        from: 'personalinformations',
-        localField: '_id',
-        foreignField: 'user',
-        as: 'personalInfo',
-      },
-    },
-    {
-      $lookup: {
-        from: 'professionalinformations',
-        localField: '_id',
-        foreignField: 'user',
-        as: 'professionalInfo',
-      },
-    },
-    {
-      $lookup: {
-        from: 'documents',
-        localField: '_id',
-        foreignField: 'user',
-        as: 'documents',
-      },
-    },
-
-    {
-      $project: {
-        email: 1,
-        name: 1,
-        role: 1,
-        phone: 1,
-        coverImage: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
-        professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
-        documents: { $arrayElemAt: ['$documents', 0] },
-      },
-    },
-    {
-      $match: {
-        personalInfo: { $exists: true, $ne: null },
-        professionalInfo: { $exists: true, $ne: null },
-      },
-    },
-    {
-      $sort: {
-        createdAt: 1,
-      },
-    },
-  ]);
-
-  return result;
-};
 
 const getUserById = async (id: string): Promise<IUser | null> => {
   if (!id) {
@@ -452,11 +392,15 @@ const updateCoverImage = async (
   return result;
 };
 
-const createOffer = async (
+const createOrUpdateOffer = async (
   payload: any,
   user: Partial<IUser>
 ): Promise<any> => {
-  const result = await Offer.create({ ...payload, partner: user._id });
+  payload.partner = user._id;
+  const result = await Offer.findByIdAndUpdate(payload?.offer, payload, {
+    new: true,
+    upsert: true,
+  });
   return result;
 };
 
@@ -553,6 +497,88 @@ const deleteOffer = async (id: string): Promise<any> => {
   return result;
 };
 
+const storePro = async (payload: any, user: Partial<IUser>): Promise<any> => {
+  const { pro } = payload;
+
+  const existingPro = await Pro.findOne({ partner: user._id, pro });
+  if (existingPro) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Pro already exists');
+  }
+
+  const result = await Pro.create({ partner: user._id, pro });
+  return result;
+};
+
+const getPros = async (user: Partial<IUser>): Promise<IUser[]> => {
+  const result = await Pro.aggregate([
+    {
+      $match: {
+        partner: new mongoose.Types.ObjectId(user._id),
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'pro',
+        foreignField: '_id',
+        as: 'pro',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'personalinformations',
+              localField: '_id',
+              foreignField: 'user',
+              as: 'personalInfo',
+            },
+          },
+          {
+            $lookup: {
+              from: 'professionalinformations',
+              localField: '_id',
+              foreignField: 'user',
+              as: 'professionalInfo',
+            },
+          },
+          {
+            $lookup: {
+              from: 'documents',
+              localField: '_id',
+              foreignField: 'user',
+              as: 'documents',
+            },
+          },
+          {
+            $addFields: {
+              personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
+              professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
+              documents: { $arrayElemAt: ['$documents', 0] },
+            },
+          },
+          {
+            $project: {
+              password: 0,
+              isGoogleUser: 0,
+              canResetPassword: 0,
+              __v: 0,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        pro: 1,
+      },
+    },
+    {
+      $unwind: '$pro',
+    },
+  ]);
+
+  return result.map(item => item.pro).reverse();
+};
+
 export const UserService = {
   createUser,
   updateUser,
@@ -564,7 +590,8 @@ export const UserService = {
   updateCoverImage,
   getPros,
   joinWaitlist,
-  createOffer,
+  createOrUpdateOffer,
   getOffers,
   deleteOffer,
+  storePro,
 };

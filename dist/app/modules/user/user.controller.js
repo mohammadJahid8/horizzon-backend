@@ -92,7 +92,7 @@ const getUserProfile = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
     });
 }));
 const getPros = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield user_service_1.UserService.getPros();
+    const result = yield user_service_1.UserService.getPros(req.user);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -101,6 +101,7 @@ const getPros = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0
     });
 }));
 const getUserById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('result', req.params.id);
     const result = yield user_service_1.UserService.getUserById(req.params.id);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
@@ -119,8 +120,8 @@ const updateCoverImage = (0, catchAsync_1.default)((req, res) => __awaiter(void 
         data: result,
     });
 }));
-const createOffer = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield user_service_1.UserService.createOffer(req.body, req.user);
+const createOrUpdateOffer = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.createOrUpdateOffer(req.body, req.user);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -146,6 +147,15 @@ const deleteOffer = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
         data: result,
     });
 }));
+const storePro = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.storePro(req.body, req.user);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Pro stored successfully!',
+        data: result,
+    });
+}));
 exports.UserController = {
     createUser,
     updateUser,
@@ -157,7 +167,8 @@ exports.UserController = {
     updateCoverImage,
     getPros,
     joinWaitlist,
-    createOffer,
+    createOrUpdateOffer,
     getOffers,
     deleteOffer,
+    storePro,
 };
