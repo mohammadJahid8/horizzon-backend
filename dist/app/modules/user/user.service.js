@@ -387,7 +387,8 @@ const getOffers = (user) => __awaiter(void 0, void 0, void 0, function* () {
             $project: {
                 pro: { $arrayElemAt: ['$pro', 0] },
                 partner: { $arrayElemAt: ['$partner', 0] },
-                notes: 1,
+                partnerNotes: 1,
+                proNotes: 1,
                 documentsNeeded: 1,
                 status: 1,
                 jobLink: 1,
@@ -479,6 +480,29 @@ const getPros = (user) => __awaiter(void 0, void 0, void 0, function* () {
     ]);
     return result.map(item => item.pro).reverse();
 });
+const uploadOfferDocuments = (files, id) => __awaiter(void 0, void 0, void 0, function* () {
+    const fileMap = {};
+    if (files.length > 0) {
+        for (const file of files) {
+            const cloudRes = yield cloudinary_1.default.v2.uploader.upload(file.path);
+            fileMap[file.originalname] = cloudRes.secure_url;
+        }
+    }
+    const offer = yield offer_model_1.Offer.findById(id);
+    if (!offer) {
+        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'Offer not found');
+    }
+    const documentsNeeded = offer.documentsNeeded;
+    const documents = documentsNeeded.map((document) => {
+        if (fileMap[document._id]) {
+            return Object.assign(Object.assign({}, document), { url: fileMap[document._id], status: 'uploaded' });
+        }
+        return document;
+    });
+    offer.documentsNeeded = documents;
+    yield offer.save();
+    return offer;
+});
 exports.UserService = {
     createUser,
     updateUser,
@@ -494,4 +518,5 @@ exports.UserService = {
     getOffers,
     deleteOffer,
     storePro,
+    uploadOfferDocuments,
 };

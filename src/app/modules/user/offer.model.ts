@@ -12,17 +12,28 @@ const OfferSchema = new Schema<any>(
       ref: 'User',
     },
     jobLink: {
-      type: String || null,
+      type: String,
     },
     documentsNeeded: [
       {
         title: {
           type: String,
         },
+        status: {
+          type: String,
+          enum: ['pending', 'uploaded'],
+          default: 'pending',
+        },
+        url: {
+          type: String,
+        },
       },
     ],
-    notes: {
-      type: String || null,
+    partnerNotes: {
+      type: String,
+    },
+    proNotes: {
+      type: String,
     },
     status: {
       type: String,

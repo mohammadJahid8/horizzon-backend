@@ -66,6 +66,12 @@ router.post(
   auth(ENUM_USER_ROLE.PARTNER),
   UserController.createOrUpdateOffer
 );
+router.post(
+  '/offer/upload/:id',
+  auth(ENUM_USER_ROLE.PRO),
+  upload.array(`documents`),
+  UserController.uploadOfferDocuments
+);
 router.get(
   '/offer',
   auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),

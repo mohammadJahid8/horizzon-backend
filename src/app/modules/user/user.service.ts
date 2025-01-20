@@ -479,7 +479,8 @@ const getOffers = async (user: Partial<IUser>): Promise<any> => {
       $project: {
         pro: { $arrayElemAt: ['$pro', 0] },
         partner: { $arrayElemAt: ['$partner', 0] },
-        notes: 1,
+        partnerNotes: 1,
+        proNotes: 1,
         documentsNeeded: 1,
         status: 1,
         jobLink: 1,
@@ -579,6 +580,34 @@ const getPros = async (user: Partial<IUser>): Promise<IUser[]> => {
   return result.map(item => item.pro).reverse();
 };
 
+const uploadOfferDocuments = async (files: any, id: string): Promise<any> => {
+  const fileMap: any = {};
+  if (files.length > 0) {
+    for (const file of files) {
+      const cloudRes = await cloudinary.v2.uploader.upload(file.path);
+      fileMap[file.originalname] = cloudRes.secure_url;
+    }
+  }
+
+  const offer = await Offer.findById(id);
+  if (!offer) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Offer not found');
+  }
+
+  const documentsNeeded = offer.documentsNeeded;
+
+  const documents = documentsNeeded.map((document: any) => {
+    if (fileMap[document._id]) {
+      return { ...document, url: fileMap[document._id], status: 'uploaded' };
+    }
+    return document;
+  });
+
+  offer.documentsNeeded = documents;
+  await offer.save();
+  return offer;
+};
+
 export const UserService = {
   createUser,
   updateUser,
@@ -594,4 +623,5 @@ export const UserService = {
   getOffers,
   deleteOffer,
   storePro,
+  uploadOfferDocuments,
 };

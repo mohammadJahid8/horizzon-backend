@@ -29,6 +29,7 @@ user_controller_1.UserController.getUserById);
 router.get('/pros', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER), user_controller_1.UserController.getPros);
 router.patch('/cover-image', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), upload.single('coverImage'), user_controller_1.UserController.updateCoverImage);
 router.post('/offer', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER), user_controller_1.UserController.createOrUpdateOffer);
+router.post('/offer/upload/:id', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PRO), upload.array(`documents`), user_controller_1.UserController.uploadOfferDocuments);
 router.get('/offer', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), user_controller_1.UserController.getOffers);
 router.delete('/offer/:id', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER), user_controller_1.UserController.deleteOffer);
 router.post('/store-pro', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER), user_controller_1.UserController.storePro);

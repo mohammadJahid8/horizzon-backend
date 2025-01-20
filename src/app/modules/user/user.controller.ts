@@ -180,6 +180,21 @@ const createOrUpdateOffer: RequestHandler = catchAsync(
     });
   }
 );
+const uploadOfferDocuments: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.uploadOfferDocuments(
+      req.files,
+      req.params.id
+    );
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Offer documents uploaded successfully!',
+      data: result,
+    });
+  }
+);
 const getOffers: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
     const result = await UserService.getOffers(req.user as Partial<IUser>);
@@ -235,5 +250,6 @@ export const UserController = {
   createOrUpdateOffer,
   getOffers,
   deleteOffer,
+  uploadOfferDocuments,
   storePro,
 };
