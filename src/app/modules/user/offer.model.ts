@@ -29,16 +29,25 @@ const OfferSchema = new Schema<any>(
         },
       },
     ],
-    partnerNotes: {
-      type: String,
-    },
-    proNotes: {
-      type: String,
-    },
+    notes: [
+      {
+        role: {
+          type: String,
+          enum: ['partner', 'pro'],
+        },
+        note: {
+          type: String,
+        },
+      },
+    ],
     status: {
       type: String,
       enum: ['pending', 'accepted', 'rejected'],
       default: 'pending',
+    },
+    isRemovedByPro: {
+      type: Boolean,
+      default: false,
     },
   },
   {

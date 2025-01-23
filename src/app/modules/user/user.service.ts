@@ -396,12 +396,25 @@ const createOrUpdateOffer = async (
   payload: any,
   user: Partial<IUser>
 ): Promise<any> => {
+  // Ensure the payload has the partner ID
   payload.partner = user._id;
-  const result = await Offer.findByIdAndUpdate(payload?.offer, payload, {
-    new: true,
-    upsert: true,
-  });
-  return result;
+
+  // Check if `payload.offer` exists to differentiate between update and create
+  if (payload?.offer) {
+    // Try updating the document
+    const result = await Offer.findByIdAndUpdate(payload.offer, payload, {
+      new: true, // Return the updated document
+      upsert: true, // Create a new document if it doesn't exist
+      setDefaultsOnInsert: true, // Ensure default values are set
+    });
+
+    return result;
+  } else {
+    // If no `offer` ID is provided, create a new document explicitly
+    const newOffer = new Offer(payload);
+    const savedOffer = await newOffer.save();
+    return savedOffer;
+  }
 };
 
 const getOffers = async (user: Partial<IUser>): Promise<any> => {
@@ -409,6 +422,7 @@ const getOffers = async (user: Partial<IUser>): Promise<any> => {
     {
       $match: {
         [user.role as string]: new mongoose.Types.ObjectId(user._id),
+        ...(user.role === 'pro' ? { isRemovedByPro: { $ne: true } } : {}),
       },
     },
     {
@@ -479,8 +493,7 @@ const getOffers = async (user: Partial<IUser>): Promise<any> => {
       $project: {
         pro: { $arrayElemAt: ['$pro', 0] },
         partner: { $arrayElemAt: ['$partner', 0] },
-        partnerNotes: 1,
-        proNotes: 1,
+        notes: 1,
         documentsNeeded: 1,
         status: 1,
         jobLink: 1,
@@ -495,6 +508,23 @@ const getOffers = async (user: Partial<IUser>): Promise<any> => {
 
 const deleteOffer = async (id: string): Promise<any> => {
   const result = await Offer.findByIdAndDelete(id);
+  return result;
+};
+
+const updateOffer = async (id: string, payload: any): Promise<any> => {
+  const result = await Offer.findByIdAndUpdate(id, payload, { new: true });
+
+  return result;
+};
+
+const updateOfferNotes = async (id: string, payload: any): Promise<any> => {
+  console.log({ id, payload });
+  const result = await Offer.findByIdAndUpdate(
+    id,
+    { $push: { notes: payload } },
+    { new: true }
+  );
+
   return result;
 };
 
@@ -554,6 +584,10 @@ const getPros = async (user: Partial<IUser>): Promise<IUser[]> => {
               professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
               documents: { $arrayElemAt: ['$documents', 0] },
             },
+          },
+          {
+            $match:
+              user.role === 'pro' ? { isRemovedByPro: { $ne: true } } : {},
           },
           {
             $project: {
@@ -624,4 +658,6 @@ export const UserService = {
   deleteOffer,
   storePro,
   uploadOfferDocuments,
+  updateOffer,
+  updateOfferNotes,
 };

@@ -82,7 +82,16 @@ router.delete(
   auth(ENUM_USER_ROLE.PARTNER),
   UserController.deleteOffer
 );
-
+router.patch(
+  '/offer/update/:id',
+  auth(ENUM_USER_ROLE.PRO),
+  UserController.updateOffer
+);
+router.patch(
+  '/offer/notes/:id',
+  auth(ENUM_USER_ROLE.PRO, ENUM_USER_ROLE.PARTNER),
+  UserController.updateOfferNotes
+);
 router.post(
   '/store-pro',
   auth(ENUM_USER_ROLE.PARTNER),

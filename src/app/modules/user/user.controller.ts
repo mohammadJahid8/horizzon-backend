@@ -219,6 +219,30 @@ const deleteOffer: RequestHandler = catchAsync(
     });
   }
 );
+const updateOffer: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.updateOffer(req.params.id, req.body);
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Offer updated successfully!',
+      data: result,
+    });
+  }
+);
+const updateOfferNotes: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.updateOfferNotes(req.params.id, req.body);
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Offer notes updated successfully!',
+      data: result,
+    });
+  }
+);
 
 const storePro: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
@@ -252,4 +276,6 @@ export const UserController = {
   deleteOffer,
   uploadOfferDocuments,
   storePro,
+  updateOffer,
+  updateOfferNotes,
 };
