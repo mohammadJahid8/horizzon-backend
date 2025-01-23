@@ -84,7 +84,7 @@ router.delete(
 );
 router.patch(
   '/offer/update/:id',
-  auth(ENUM_USER_ROLE.PRO),
+  auth(ENUM_USER_ROLE.PRO, ENUM_USER_ROLE.PARTNER),
   UserController.updateOffer
 );
 router.patch(

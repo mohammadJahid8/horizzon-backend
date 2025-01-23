@@ -42,7 +42,7 @@ const OfferSchema = new Schema<any>(
     ],
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected'],
+      enum: ['pending', 'accepted', 'rejected', 'responded'],
       default: 'pending',
     },
     isRemovedByPro: {

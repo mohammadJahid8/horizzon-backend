@@ -638,6 +638,7 @@ const uploadOfferDocuments = async (files: any, id: string): Promise<any> => {
   });
 
   offer.documentsNeeded = documents;
+  offer.status = 'responded';
   await offer.save();
   return offer;
 };
