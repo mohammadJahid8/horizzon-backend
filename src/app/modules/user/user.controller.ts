@@ -35,7 +35,6 @@ const createUser: RequestHandler = catchAsync(
 const updateUser: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
     const data = JSON.parse(req.body.data || '{}');
-    console.log('req.body.data', data, req.file);
 
     if (Object.keys(data).length === 0) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'Data is required');
@@ -140,7 +139,6 @@ const getPros: RequestHandler = catchAsync(
 
 const getUserById: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
-    console.log('result', req.params.id);
     const result = await UserService.getUserById(req.params.id);
 
     sendResponse<IUser>(res, {
@@ -260,6 +258,60 @@ const storePro: RequestHandler = catchAsync(
   }
 );
 
+const createNotification: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.createNotification(req.body);
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Notification created successfully!',
+      data: result,
+    });
+  }
+);
+
+const getNotifications: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.getNotifications(
+      req.user as Partial<IUser>
+    );
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Notifications retrieved successfully!',
+      data: result,
+    });
+  }
+);
+const deleteNotification: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.deleteNotification(req.params.id);
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Notification deleted successfully!',
+      data: result,
+    });
+  }
+);
+const markAllNotificationsAsRead: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.markAllNotificationsAsRead(
+      req.user as Partial<IUser>
+    );
+
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'All notifications marked as read!',
+      data: result,
+    });
+  }
+);
+
 export const UserController = {
   createUser,
   updateUser,
@@ -278,4 +330,8 @@ export const UserController = {
   storePro,
   updateOffer,
   updateOfferNotes,
+  createNotification,
+  getNotifications,
+  deleteNotification,
+  markAllNotificationsAsRead,
 };

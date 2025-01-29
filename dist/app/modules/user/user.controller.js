@@ -38,7 +38,6 @@ const createUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
 }));
 const updateUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const data = JSON.parse(req.body.data || '{}');
-    console.log('req.body.data', data, req.file);
     if (Object.keys(data).length === 0) {
         throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'Data is required');
     }
@@ -101,7 +100,6 @@ const getPros = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0
     });
 }));
 const getUserById = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log('result', req.params.id);
     const result = yield user_service_1.UserService.getUserById(req.params.id);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
@@ -156,12 +154,66 @@ const deleteOffer = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, vo
         data: result,
     });
 }));
+const updateOffer = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.updateOffer(req.params.id, req.body);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Offer updated successfully!',
+        data: result,
+    });
+}));
+const updateOfferNotes = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.updateOfferNotes(req.params.id, req.body);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Offer notes updated successfully!',
+        data: result,
+    });
+}));
 const storePro = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield user_service_1.UserService.storePro(req.body, req.user);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
         message: 'Pro stored successfully!',
+        data: result,
+    });
+}));
+const createNotification = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.createNotification(req.body);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Notification created successfully!',
+        data: result,
+    });
+}));
+const getNotifications = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.getNotifications(req.user);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Notifications retrieved successfully!',
+        data: result,
+    });
+}));
+const deleteNotification = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.deleteNotification(req.params.id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Notification deleted successfully!',
+        data: result,
+    });
+}));
+const markAllNotificationsAsRead = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.markAllNotificationsAsRead(req.user);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'All notifications marked as read!',
         data: result,
     });
 }));
@@ -181,4 +233,10 @@ exports.UserController = {
     deleteOffer,
     uploadOfferDocuments,
     storePro,
+    updateOffer,
+    updateOfferNotes,
+    createNotification,
+    getNotifications,
+    deleteNotification,
+    markAllNotificationsAsRead,
 };

@@ -11,6 +11,7 @@ import { ENUM_USER_ROLE } from '../../../enums/user';
 import { calculatePartnerPercentage } from '../../../helpers/calculatePartnerPercentage';
 import { sendEmail } from '../auth/sendMail';
 import { Documents } from './documents.model';
+import { Notification } from './notification.model';
 import { Offer } from './offer.model';
 import { PersonalInfo } from './personal-info.model';
 import { Pro } from './pro.model';
@@ -518,7 +519,6 @@ const updateOffer = async (id: string, payload: any): Promise<any> => {
 };
 
 const updateOfferNotes = async (id: string, payload: any): Promise<any> => {
-  console.log({ id, payload });
   const result = await Offer.findByIdAndUpdate(
     id,
     { $push: { notes: payload } },
@@ -643,6 +643,46 @@ const uploadOfferDocuments = async (files: any, id: string): Promise<any> => {
   return offer;
 };
 
+const createNotification = async (payload: any): Promise<any> => {
+  const result = await Notification.create(payload);
+
+  const user = await User.findById(payload.user);
+
+  await sendEmail(
+    user?.email as string,
+    'Notification',
+    `
+      <div>
+        <p>New notification: <strong>${payload.message}</strong></p>
+        <p>Thank you</p>
+      </div>
+    `
+  );
+  return result;
+};
+
+const getNotifications = async (user: Partial<IUser>): Promise<any> => {
+  const result = await Notification.find({ user: user._id }).sort({
+    createdAt: -1,
+  });
+  return result;
+};
+
+const deleteNotification = async (id: string): Promise<any> => {
+  const result = await Notification.findByIdAndDelete(id);
+  return result;
+};
+
+const markAllNotificationsAsRead = async (
+  user: Partial<IUser>
+): Promise<any> => {
+  const result = await Notification.updateMany(
+    { user: user._id },
+    { $set: { isRead: true } }
+  );
+  return result;
+};
+
 export const UserService = {
   createUser,
   updateUser,
@@ -661,4 +701,8 @@ export const UserService = {
   uploadOfferDocuments,
   updateOffer,
   updateOfferNotes,
+  createNotification,
+  getNotifications,
+  deleteNotification,
+  markAllNotificationsAsRead,
 };

@@ -98,4 +98,26 @@ router.post(
   UserController.storePro
 );
 
+router.post(
+  '/notification',
+  auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
+  UserController.createNotification
+);
+
+router.get(
+  '/notification',
+  auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
+  UserController.getNotifications
+);
+router.delete(
+  '/notification/:id',
+  auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
+  UserController.deleteNotification
+);
+router.patch(
+  '/notification/mark-as-read',
+  auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
+  UserController.markAllNotificationsAsRead
+);
+
 export const UserRoutes = router;

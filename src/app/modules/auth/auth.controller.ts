@@ -50,8 +50,6 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
   const { refreshToken } = req.cookies;
   const bodyRefreshToken = req.body.refreshToken;
 
-  console.log({ refreshToken, bodyRefreshToken });
-
   const result = await AuthService.refreshToken(
     refreshToken || bodyRefreshToken
   );

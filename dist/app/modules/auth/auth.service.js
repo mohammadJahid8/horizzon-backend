@@ -130,9 +130,6 @@ const loginWithGoogle = (payload) => __awaiter(void 0, void 0, void 0, function*
     return returnData;
 });
 const refreshToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
-    //verify token
-    // invalid token - synchronous
-    console.log('tokentokentoken', token);
     let verifiedToken = null;
     try {
         verifiedToken = jwtHelpers_1.jwtHelpers.verifyToken(token, config_1.default.jwt.refresh_secret);

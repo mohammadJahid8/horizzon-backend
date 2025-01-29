@@ -30,16 +30,25 @@ const OfferSchema = new mongoose_1.Schema({
             },
         },
     ],
-    partnerNotes: {
-        type: String,
-    },
-    proNotes: {
-        type: String,
-    },
+    notes: [
+        {
+            role: {
+                type: String,
+                enum: ['partner', 'pro'],
+            },
+            note: {
+                type: String,
+            },
+        },
+    ],
     status: {
         type: String,
-        enum: ['pending', 'accepted', 'rejected'],
+        enum: ['pending', 'accepted', 'rejected', 'responded'],
         default: 'pending',
+    },
+    isRemovedByPro: {
+        type: Boolean,
+        default: false,
     },
 }, {
     timestamps: true,

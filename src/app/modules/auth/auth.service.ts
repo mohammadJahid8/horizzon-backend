@@ -194,11 +194,6 @@ const loginWithGoogle = async (
 };
 
 const refreshToken = async (token: string): Promise<IRefreshTokenResponse> => {
-  //verify token
-  // invalid token - synchronous
-
-  console.log('tokentokentoken', token);
-
   let verifiedToken = null;
   try {
     verifiedToken = jwtHelpers.verifyToken(

@@ -23,6 +23,7 @@ const user_1 = require("../../../enums/user");
 const calculatePartnerPercentage_1 = require("../../../helpers/calculatePartnerPercentage");
 const sendMail_1 = require("../auth/sendMail");
 const documents_model_1 = require("./documents.model");
+const notification_model_1 = require("./notification.model");
 const offer_model_1 = require("./offer.model");
 const personal_info_model_1 = require("./personal-info.model");
 const pro_model_1 = require("./pro.model");
@@ -305,19 +306,29 @@ const updateCoverImage = (id, file) => __awaiter(void 0, void 0, void 0, functio
     return result;
 });
 const createOrUpdateOffer = (payload, user) => __awaiter(void 0, void 0, void 0, function* () {
+    // Ensure the payload has the partner ID
     payload.partner = user._id;
-    const result = yield offer_model_1.Offer.findByIdAndUpdate(payload === null || payload === void 0 ? void 0 : payload.offer, payload, {
-        new: true,
-        upsert: true,
-    });
-    return result;
+    // Check if `payload.offer` exists to differentiate between update and create
+    if (payload === null || payload === void 0 ? void 0 : payload.offer) {
+        // Try updating the document
+        const result = yield offer_model_1.Offer.findByIdAndUpdate(payload.offer, payload, {
+            new: true, // Return the updated document
+            upsert: true, // Create a new document if it doesn't exist
+            setDefaultsOnInsert: true, // Ensure default values are set
+        });
+        return result;
+    }
+    else {
+        // If no `offer` ID is provided, create a new document explicitly
+        const newOffer = new offer_model_1.Offer(payload);
+        const savedOffer = yield newOffer.save();
+        return savedOffer;
+    }
 });
 const getOffers = (user) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield offer_model_1.Offer.aggregate([
         {
-            $match: {
-                [user.role]: new mongoose_1.default.Types.ObjectId(user._id),
-            },
+            $match: Object.assign({ [user.role]: new mongoose_1.default.Types.ObjectId(user._id) }, (user.role === 'pro' ? { isRemovedByPro: { $ne: true } } : {})),
         },
         {
             $lookup: {
@@ -387,8 +398,7 @@ const getOffers = (user) => __awaiter(void 0, void 0, void 0, function* () {
             $project: {
                 pro: { $arrayElemAt: ['$pro', 0] },
                 partner: { $arrayElemAt: ['$partner', 0] },
-                partnerNotes: 1,
-                proNotes: 1,
+                notes: 1,
                 documentsNeeded: 1,
                 status: 1,
                 jobLink: 1,
@@ -401,6 +411,14 @@ const getOffers = (user) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const deleteOffer = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield offer_model_1.Offer.findByIdAndDelete(id);
+    return result;
+});
+const updateOffer = (id, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield offer_model_1.Offer.findByIdAndUpdate(id, payload, { new: true });
+    return result;
+});
+const updateOfferNotes = (id, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield offer_model_1.Offer.findByIdAndUpdate(id, { $push: { notes: payload } }, { new: true });
     return result;
 });
 const storePro = (payload, user) => __awaiter(void 0, void 0, void 0, function* () {
@@ -458,6 +476,9 @@ const getPros = (user) => __awaiter(void 0, void 0, void 0, function* () {
                         },
                     },
                     {
+                        $match: user.role === 'pro' ? { isRemovedByPro: { $ne: true } } : {},
+                    },
+                    {
                         $project: {
                             password: 0,
                             isGoogleUser: 0,
@@ -500,8 +521,34 @@ const uploadOfferDocuments = (files, id) => __awaiter(void 0, void 0, void 0, fu
         return document;
     });
     offer.documentsNeeded = documents;
+    offer.status = 'responded';
     yield offer.save();
     return offer;
+});
+const createNotification = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield notification_model_1.Notification.create(payload);
+    const user = yield user_model_1.User.findById(payload.user);
+    yield (0, sendMail_1.sendEmail)(user === null || user === void 0 ? void 0 : user.email, 'Notification', `
+      <div>
+        <p>New notification: <strong>${payload.message}</strong></p>
+        <p>Thank you</p>
+      </div>
+    `);
+    return result;
+});
+const getNotifications = (user) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield notification_model_1.Notification.find({ user: user._id }).sort({
+        createdAt: -1,
+    });
+    return result;
+});
+const deleteNotification = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield notification_model_1.Notification.findByIdAndDelete(id);
+    return result;
+});
+const markAllNotificationsAsRead = (user) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield notification_model_1.Notification.updateMany({ user: user._id }, { $set: { isRead: true } });
+    return result;
 });
 exports.UserService = {
     createUser,
@@ -519,4 +566,10 @@ exports.UserService = {
     deleteOffer,
     storePro,
     uploadOfferDocuments,
+    updateOffer,
+    updateOfferNotes,
+    createNotification,
+    getNotifications,
+    deleteNotification,
+    markAllNotificationsAsRead,
 };
