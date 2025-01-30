@@ -120,4 +120,10 @@ router.patch(
   UserController.markAllNotificationsAsRead
 );
 
+router.delete(
+  '/delete-account',
+  auth(ENUM_USER_ROLE.PARTNER, ENUM_USER_ROLE.PRO),
+  UserController.deleteAccount
+);
+
 export const UserRoutes = router;

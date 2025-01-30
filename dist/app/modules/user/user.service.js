@@ -75,6 +75,40 @@ const updateUser = (payload, user
     });
     return result;
 });
+const deleteAccount = (user) => __awaiter(void 0, void 0, void 0, function* () {
+    const session = yield mongoose_1.default.startSession();
+    session.startTransaction();
+    try {
+        const userId = user._id;
+        const userRole = user.role;
+        // Delete user from User collection
+        yield user_model_1.User.findByIdAndDelete(userId, { session });
+        // Delete user from Documents, PersonalInformation, ProfessionalInformation collections
+        if (userRole === user_1.ENUM_USER_ROLE.PRO) {
+            yield Promise.all([
+                documents_model_1.Documents.deleteMany({ user: userId }, { session }),
+                personal_info_model_1.PersonalInfo.deleteMany({ user: userId }, { session }),
+                professional_info_model_1.ProfessionalInfo.deleteMany({ user: userId }, { session }),
+                pro_model_1.Pro.deleteMany({ pro: userId }, { session }),
+            ]);
+        }
+        else if (userRole === user_1.ENUM_USER_ROLE.PARTNER) {
+            yield Promise.all([
+                personal_info_model_1.PersonalInfo.deleteMany({ user: userId }, { session }),
+                pro_model_1.Pro.deleteMany({ partner: userId }, { session }),
+                offer_model_1.Offer.deleteMany({ partner: userId }, { session }),
+            ]);
+        }
+        yield session.commitTransaction();
+        session.endSession();
+        return 'Account deleted successfully';
+    }
+    catch (error) {
+        yield session.abortTransaction();
+        session.endSession();
+        throw new ApiError_1.default(http_status_1.default.INTERNAL_SERVER_ERROR, 'Failed to delete account');
+    }
+});
 const updateOrCreateUserPersonalInformation = (payload, user, file) => __awaiter(void 0, void 0, void 0, function* () {
     const { _id } = user;
     const isPersonalInformationExist = yield personal_info_model_1.PersonalInfo.findOne({
@@ -396,6 +430,9 @@ const getOffers = (user) => __awaiter(void 0, void 0, void 0, function* () {
             },
         },
         {
+            $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+        },
+        {
             $project: {
                 pro: { $arrayElemAt: ['$pro', 0] },
                 partner: { $arrayElemAt: ['$partner', 0] },
@@ -573,4 +610,5 @@ exports.UserService = {
     getNotifications,
     deleteNotification,
     markAllNotificationsAsRead,
+    deleteAccount,
 };

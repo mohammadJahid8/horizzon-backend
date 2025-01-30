@@ -82,6 +82,45 @@ const updateUser = async (
   return result;
 };
 
+const deleteAccount = async (user: Partial<IUser>) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const userId = user._id;
+    const userRole = user.role;
+
+    // Delete user from User collection
+    await User.findByIdAndDelete(userId, { session });
+
+    // Delete user from Documents, PersonalInformation, ProfessionalInformation collections
+    if (userRole === ENUM_USER_ROLE.PRO) {
+      await Promise.all([
+        Documents.deleteMany({ user: userId }, { session }),
+        PersonalInfo.deleteMany({ user: userId }, { session }),
+        ProfessionalInfo.deleteMany({ user: userId }, { session }),
+        Pro.deleteMany({ pro: userId }, { session }),
+      ]);
+    } else if (userRole === ENUM_USER_ROLE.PARTNER) {
+      await Promise.all([
+        PersonalInfo.deleteMany({ user: userId }, { session }),
+        Pro.deleteMany({ partner: userId }, { session }),
+        Offer.deleteMany({ partner: userId }, { session }),
+      ]);
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+    return 'Account deleted successfully';
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Failed to delete account'
+    );
+  }
+};
+
 const updateOrCreateUserPersonalInformation = async (
   payload: Partial<IUser>,
   user: Partial<IUser>,
@@ -492,6 +531,9 @@ const getOffers = async (user: Partial<IUser>): Promise<any> => {
       },
     },
     {
+      $sort: { createdAt: -1 }, // Sort by createdAt in descending order
+    },
+    {
       $project: {
         pro: { $arrayElemAt: ['$pro', 0] },
         partner: { $arrayElemAt: ['$partner', 0] },
@@ -706,4 +748,5 @@ export const UserService = {
   getNotifications,
   deleteNotification,
   markAllNotificationsAsRead,
+  deleteAccount,
 };

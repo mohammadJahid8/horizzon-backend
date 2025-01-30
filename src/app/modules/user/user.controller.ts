@@ -312,6 +312,19 @@ const markAllNotificationsAsRead: RequestHandler = catchAsync(
   }
 );
 
+const deleteAccount: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.deleteAccount(req.user as Partial<IUser>);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Account deleted successfully!',
+      data: result,
+    });
+  }
+);
+
 export const UserController = {
   createUser,
   updateUser,
@@ -334,4 +347,5 @@ export const UserController = {
   getNotifications,
   deleteNotification,
   markAllNotificationsAsRead,
+  deleteAccount,
 };

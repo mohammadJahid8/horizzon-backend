@@ -217,6 +217,15 @@ const markAllNotificationsAsRead = (0, catchAsync_1.default)((req, res) => __awa
         data: result,
     });
 }));
+const deleteAccount = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.deleteAccount(req.user);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Account deleted successfully!',
+        data: result,
+    });
+}));
 exports.UserController = {
     createUser,
     updateUser,
@@ -239,4 +248,5 @@ exports.UserController = {
     getNotifications,
     deleteNotification,
     markAllNotificationsAsRead,
+    deleteAccount,
 };

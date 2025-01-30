@@ -39,4 +39,5 @@ router.post('/notification', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, 
 router.get('/notification', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), user_controller_1.UserController.getNotifications);
 router.delete('/notification/:id', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), user_controller_1.UserController.deleteNotification);
 router.patch('/notification/mark-as-read', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), user_controller_1.UserController.markAllNotificationsAsRead);
+router.delete('/delete-account', (0, auth_1.default)(user_1.ENUM_USER_ROLE.PARTNER, user_1.ENUM_USER_ROLE.PRO), user_controller_1.UserController.deleteAccount);
 exports.UserRoutes = router;
