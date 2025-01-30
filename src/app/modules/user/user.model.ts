@@ -28,10 +28,10 @@ const UserSchema = new Schema<IUser, UserModel>(
       type: String,
       required: false,
     },
-    phone: {
-      type: String,
-      required: false,
-    },
+    // phone: {
+    //   type: String,
+    //   required: false,
+    // },
 
     isGoogleUser: {
       type: Boolean,

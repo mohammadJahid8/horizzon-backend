@@ -13,6 +13,10 @@ const PersonalInfoSchema = new Schema<any>(
     lastName: {
       type: String,
     },
+    phone: {
+      type: String,
+      required: false,
+    },
     image: {
       type: String,
       default:

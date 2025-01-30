@@ -39,10 +39,10 @@ const UserSchema = new mongoose_1.Schema({
         type: String,
         required: false,
     },
-    phone: {
-        type: String,
-        required: false,
-    },
+    // phone: {
+    //   type: String,
+    //   required: false,
+    // },
     isGoogleUser: {
         type: Boolean,
         default: false,
