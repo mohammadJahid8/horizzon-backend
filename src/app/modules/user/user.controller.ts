@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { RequestHandler } from 'express-serve-static-core';
 import httpStatus from 'http-status';
-import ApiError from '../../../errors/ApiError';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { IUser } from './user.interface';
@@ -34,16 +33,21 @@ const createUser: RequestHandler = catchAsync(
 
 const updateUser: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
-    const data = JSON.parse(req.body.data || '{}');
+    const id = req.params.id;
 
-    if (Object.keys(data).length === 0) {
-      throw new ApiError(httpStatus.BAD_REQUEST, 'Data is required');
-    }
+    const result = await UserService.updateUser(req.body, id);
 
-    const result = await UserService.updateUser(
-      data,
-      req.user as Partial<IUser>
-    );
+    sendResponse<IUser>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'User profile updated successfully!',
+      data: result,
+    });
+  }
+);
+const updateAllUsers: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.updateAllUsers();
 
     sendResponse<IUser>(res, {
       statusCode: httpStatus.OK,
@@ -57,10 +61,13 @@ const updateUser: RequestHandler = catchAsync(
 const updateOrCreateUserPersonalInformation = catchAsync(
   async (req: Request, res: Response) => {
     const data = JSON.parse(req.body.data || '{}');
+    const queryId = req.query.id;
+
+    const id = queryId ? queryId : req.user?._id;
 
     const result = await UserService.updateOrCreateUserPersonalInformation(
       data,
-      req.user as Partial<IUser>,
+      id as string,
       req.file
     );
 
@@ -77,10 +84,13 @@ const updateOrCreateUserProfessionalInformation = catchAsync(
   async (req: Request, res: Response) => {
     const data = JSON.parse(req.body.data || '{}');
     const files = req.files;
+    const queryId = req.query.id;
+
+    const id = queryId ? queryId : req.user?._id;
 
     const result = await UserService.updateOrCreateUserProfessionalInformation(
       data,
-      req.user as Partial<IUser>,
+      id as string,
       files
     );
 
@@ -97,8 +107,11 @@ const updateOrCreateUserDocuments = catchAsync(
     const files = req.files;
     const payload = JSON.parse(req.body.data || '{}');
 
+    const queryId = req.query.id;
+
+    const id = queryId ? queryId : req.user?._id;
     const result = await UserService.updateOrCreateUserDocuments(
-      req.user as Partial<IUser>,
+      id as string,
       files,
       payload
     );
@@ -124,6 +137,19 @@ const getUserProfile: RequestHandler = catchAsync(
     });
   }
 );
+const getUsers: RequestHandler = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await UserService.getUsers();
+
+    sendResponse<IUser[]>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'User profile retrieved successfully!',
+      data: result,
+    });
+  }
+);
+
 const getPros: RequestHandler = catchAsync(
   async (req: Request, res: Response) => {
     const result = await UserService.getPros(req.user as Partial<IUser>);
@@ -348,4 +374,6 @@ export const UserController = {
   deleteNotification,
   markAllNotificationsAsRead,
   deleteAccount,
+  getUsers,
+  updateAllUsers,
 };

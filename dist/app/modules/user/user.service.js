@@ -67,12 +67,8 @@ const createUser = (user) => __awaiter(void 0, void 0, void 0, function* () {
     }
     return newUser;
 });
-const updateUser = (payload, user
-// file: any
-) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield user_model_1.User.findOneAndUpdate({ email: user.email }, payload, {
-        new: true,
-    });
+const updateAllUsers = () => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_model_1.User.updateMany({ role: 'pro' }, { $set: { status: 'pending' } });
     return result;
 });
 const deleteAccount = (user) => __awaiter(void 0, void 0, void 0, function* () {
@@ -83,6 +79,7 @@ const deleteAccount = (user) => __awaiter(void 0, void 0, void 0, function* () {
         const userRole = user.role;
         // Delete user from User collection
         yield user_model_1.User.findByIdAndDelete(userId, { session });
+        console.log('inside delete account');
         // Delete user from Documents, PersonalInformation, ProfessionalInformation collections
         if (userRole === user_1.ENUM_USER_ROLE.PRO) {
             yield Promise.all([
@@ -109,10 +106,25 @@ const deleteAccount = (user) => __awaiter(void 0, void 0, void 0, function* () {
         throw new ApiError_1.default(http_status_1.default.INTERNAL_SERVER_ERROR, 'Failed to delete account');
     }
 });
-const updateOrCreateUserPersonalInformation = (payload, user, file) => __awaiter(void 0, void 0, void 0, function* () {
-    const { _id } = user;
+const updateUser = (payload, id
+// file: any
+) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log({ payload });
+    if (payload.status === 'removed') {
+        const user = yield user_model_1.User.findById(id);
+        if (!user) {
+            throw new ApiError_1.default(http_status_1.default.NOT_FOUND, 'User not found');
+        }
+        yield deleteAccount(user);
+    }
+    const result = yield user_model_1.User.findByIdAndUpdate(id, payload, {
+        new: true,
+    });
+    return result;
+});
+const updateOrCreateUserPersonalInformation = (payload, id, file) => __awaiter(void 0, void 0, void 0, function* () {
     const isPersonalInformationExist = yield personal_info_model_1.PersonalInfo.findOne({
-        user: _id,
+        user: id,
     });
     // console.log({ file, payload });
     if (file === null || file === void 0 ? void 0 : file.path) {
@@ -121,13 +133,12 @@ const updateOrCreateUserPersonalInformation = (payload, user, file) => __awaiter
     }
     let result;
     if (!isPersonalInformationExist) {
-        result = yield personal_info_model_1.PersonalInfo.create(Object.assign({ user: _id }, payload));
+        result = yield personal_info_model_1.PersonalInfo.create(Object.assign({ user: id }, payload));
     }
-    result = yield personal_info_model_1.PersonalInfo.findOneAndUpdate({ user: _id }, { $set: payload }, { new: true });
+    result = yield personal_info_model_1.PersonalInfo.findOneAndUpdate({ user: id }, { $set: payload }, { new: true });
     return result;
 });
-const updateOrCreateUserProfessionalInformation = (payload, user, files) => __awaiter(void 0, void 0, void 0, function* () {
-    const { _id } = user;
+const updateOrCreateUserProfessionalInformation = (payload, id, files) => __awaiter(void 0, void 0, void 0, function* () {
     const { certifications } = payload;
     const fileMap = {};
     if (files.length > 0) {
@@ -149,18 +160,18 @@ const updateOrCreateUserProfessionalInformation = (payload, user, files) => __aw
         payload.certifications = processedCertifications;
     }
     const isProfessionalInformationExist = yield professional_info_model_1.ProfessionalInfo.findOne({
-        user: _id,
+        user: id,
     });
     let result;
     if (!isProfessionalInformationExist) {
-        result = yield professional_info_model_1.ProfessionalInfo.create(Object.assign({ user: _id }, payload));
+        result = yield professional_info_model_1.ProfessionalInfo.create(Object.assign({ user: id }, payload));
     }
-    result = yield professional_info_model_1.ProfessionalInfo.findOneAndUpdate({ user: _id }, { $set: payload }, { new: true });
+    result = yield professional_info_model_1.ProfessionalInfo.findOneAndUpdate({ user: id }, { $set: payload }, { new: true });
     return result;
 });
-const updateOrCreateUserDocuments = (user, files, payload) => __awaiter(void 0, void 0, void 0, function* () {
+const updateOrCreateUserDocuments = (id, files, payload) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f;
-    const { _id } = user;
+    console.log('iddd', id);
     let fileMap = {};
     if ((_b = (_a = files === null || files === void 0 ? void 0 : files.certificate) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.path) {
         fileMap.certificate = files.certificate[0].path;
@@ -178,21 +189,26 @@ const updateOrCreateUserDocuments = (user, files, payload) => __awaiter(void 0, 
             fileMap[file] = cloudRes.secure_url;
         }
     }
-    const isDocumentsExist = yield documents_model_1.Documents.findOne({ user: _id });
+    const isDocumentsExist = yield documents_model_1.Documents.findOne({ user: id });
     let result;
     if (!isDocumentsExist) {
-        result = yield documents_model_1.Documents.create(Object.assign({ user: _id }, fileMap));
+        result = yield documents_model_1.Documents.create(Object.assign({ user: id }, fileMap));
     }
     if (Object.keys(payload).length > 0) {
         fileMap = payload;
     }
     // console.log('query', fileMap);
-    result = yield documents_model_1.Documents.findOneAndUpdate({ user: _id }, { $set: fileMap }, { new: true });
+    result = yield documents_model_1.Documents.findOneAndUpdate({ user: id }, { $set: fileMap }, { new: true });
     return result;
 });
 const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () {
     const { _id, role } = user;
+    const existingUser = yield user_model_1.User.findById(_id);
+    if (!existingUser) {
+        throw new ApiError_1.default(http_status_1.default.NOT_FOUND, 'User not found');
+    }
     const personalInfo = yield personal_info_model_1.PersonalInfo.findOne({ user: _id });
+    const sharableLink = `${config_1.default.frontend_url.prod}/pro/${_id}`;
     let completionPercentage = 0;
     if (role === user_1.ENUM_USER_ROLE.PRO) {
         const professionalInfo = yield professional_info_model_1.ProfessionalInfo.findOne({ user: _id });
@@ -254,6 +270,7 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
             $project: {
                 email: 1,
                 role: 1,
+                status: 1,
                 // phone: 1,
                 coverImage: 1,
                 createdAt: 1,
@@ -273,6 +290,7 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
                         else: 0,
                     },
                 },
+                sharableLink: sharableLink,
             },
         },
     ]);
@@ -282,6 +300,7 @@ const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
     if (!id) {
         throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'User id is required');
     }
+    const sharableLink = `${config_1.default.frontend_url.prod}/pro/${id}`;
     const result = yield user_model_1.User.aggregate([
         {
             $match: {
@@ -321,13 +340,62 @@ const getUserById = (id) => __awaiter(void 0, void 0, void 0, function* () {
                 coverImage: 1,
                 createdAt: 1,
                 updatedAt: 1,
+                status: 1,
+                personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
+                professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
+                documents: { $arrayElemAt: ['$documents', 0] },
+                sharableLink: sharableLink,
+            },
+        },
+    ]);
+    return result.length > 0 ? result[0] : null;
+});
+const getUsers = () => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_model_1.User.aggregate([
+        {
+            $lookup: {
+                from: 'personalinformations',
+                localField: '_id',
+                foreignField: 'user',
+                as: 'personalInfo',
+            },
+        },
+        {
+            $lookup: {
+                from: 'professionalinformations',
+                localField: '_id',
+                foreignField: 'user',
+                as: 'professionalInfo',
+            },
+        },
+        {
+            $lookup: {
+                from: 'documents',
+                localField: '_id',
+                foreignField: 'user',
+                as: 'documents',
+            },
+        },
+        // {
+        //   $sort: { createdAt: -1 },
+        // },
+        {
+            $project: {
+                email: 1,
+                name: 1,
+                role: 1,
+                // phone: 1,
+                coverImage: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                status: 1,
                 personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
                 professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
                 documents: { $arrayElemAt: ['$documents', 0] },
             },
         },
     ]);
-    return result.length > 0 ? result[0] : null;
+    return result;
 });
 const updateCoverImage = (id, file) => __awaiter(void 0, void 0, void 0, function* () {
     if (!id) {
@@ -564,14 +632,17 @@ const uploadOfferDocuments = (files, id) => __awaiter(void 0, void 0, void 0, fu
     return offer;
 });
 const createNotification = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield notification_model_1.Notification.create(payload);
     const user = yield user_model_1.User.findById(payload.user);
-    yield (0, sendMail_1.sendEmail)(user === null || user === void 0 ? void 0 : user.email, 'Notification', `
-      <div>
-        <p>New notification: <strong>${payload.message}</strong></p>
-        <p>Thank you</p>
-      </div>
+    const email = (user === null || user === void 0 ? void 0 : user.email) || payload.email;
+    console.log(email, user, payload);
+    yield (0, sendMail_1.sendEmail)(email, 'Notification', `
+    <div>
+    <p>New notification: <strong>${payload.message}</strong></p>
+
+    <p>Thank you</p>
+    </div>
     `);
+    const result = yield notification_model_1.Notification.create(payload);
     return result;
 });
 const getNotifications = (user) => __awaiter(void 0, void 0, void 0, function* () {
@@ -611,4 +682,6 @@ exports.UserService = {
     deleteNotification,
     markAllNotificationsAsRead,
     deleteAccount,
+    getUsers,
+    updateAllUsers,
 };

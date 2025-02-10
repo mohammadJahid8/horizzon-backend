@@ -28,10 +28,11 @@ const UserSchema = new Schema<IUser, UserModel>(
       type: String,
       required: false,
     },
-    // phone: {
-    //   type: String,
-    //   required: false,
-    // },
+    status: {
+      type: String,
+      enum: ['approved', 'pending', 'rejected', 'blocked'],
+      default: 'pending',
+    },
 
     isGoogleUser: {
       type: Boolean,

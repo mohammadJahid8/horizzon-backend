@@ -71,14 +71,11 @@ const createUser = async (user: Partial<IUser>): Promise<IUser | null> => {
   return newUser;
 };
 
-const updateUser = async (
-  payload: Partial<IUser>,
-  user: Partial<IUser>
-  // file: any
-): Promise<IUser | null> => {
-  const result = await User.findOneAndUpdate({ email: user.email }, payload, {
-    new: true,
-  });
+const updateAllUsers = async (): Promise<any> => {
+  const result = await User.updateMany(
+    { role: 'pro' },
+    { $set: { status: 'pending' } }
+  );
   return result;
 };
 
@@ -91,6 +88,8 @@ const deleteAccount = async (user: Partial<IUser>) => {
 
     // Delete user from User collection
     await User.findByIdAndDelete(userId, { session });
+
+    console.log('inside delete account');
 
     // Delete user from Documents, PersonalInformation, ProfessionalInformation collections
     if (userRole === ENUM_USER_ROLE.PRO) {
@@ -121,15 +120,33 @@ const deleteAccount = async (user: Partial<IUser>) => {
   }
 };
 
+const updateUser = async (
+  payload: Partial<IUser>,
+  id: string
+  // file: any
+): Promise<IUser | null> => {
+  console.log({ payload });
+  if (payload.status === 'removed') {
+    const user = await User.findById(id);
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    }
+    await deleteAccount(user);
+  }
+
+  const result = await User.findByIdAndUpdate(id, payload, {
+    new: true,
+  });
+  return result;
+};
+
 const updateOrCreateUserPersonalInformation = async (
   payload: Partial<IUser>,
-  user: Partial<IUser>,
+  id: string,
   file: any
 ): Promise<IUser | null> => {
-  const { _id } = user;
-
   const isPersonalInformationExist = await PersonalInfo.findOne({
-    user: _id,
+    user: id,
   });
 
   // console.log({ file, payload });
@@ -142,11 +159,11 @@ const updateOrCreateUserPersonalInformation = async (
   let result: any;
 
   if (!isPersonalInformationExist) {
-    result = await PersonalInfo.create({ user: _id, ...payload });
+    result = await PersonalInfo.create({ user: id, ...payload });
   }
 
   result = await PersonalInfo.findOneAndUpdate(
-    { user: _id },
+    { user: id },
     { $set: payload },
     { new: true }
   );
@@ -155,11 +172,9 @@ const updateOrCreateUserPersonalInformation = async (
 };
 const updateOrCreateUserProfessionalInformation = async (
   payload: any,
-  user: Partial<IUser>,
+  id: string,
   files: any
 ): Promise<any> => {
-  const { _id } = user;
-
   const { certifications }: any = payload;
 
   const fileMap: any = {};
@@ -193,29 +208,28 @@ const updateOrCreateUserProfessionalInformation = async (
   }
 
   const isProfessionalInformationExist = await ProfessionalInfo.findOne({
-    user: _id,
+    user: id,
   });
 
   let result: any;
 
   if (!isProfessionalInformationExist) {
-    result = await ProfessionalInfo.create({ user: _id, ...payload });
+    result = await ProfessionalInfo.create({ user: id, ...payload });
   }
 
   result = await ProfessionalInfo.findOneAndUpdate(
-    { user: _id },
+    { user: id },
     { $set: payload },
     { new: true }
   );
+
   return result;
 };
 const updateOrCreateUserDocuments = async (
-  user: Partial<IUser>,
+  id: string,
   files: any,
   payload: any
 ): Promise<any> => {
-  const { _id } = user;
-
   let fileMap: any = {};
 
   if (files?.certificate?.[0]?.path) {
@@ -236,12 +250,12 @@ const updateOrCreateUserDocuments = async (
     }
   }
 
-  const isDocumentsExist = await Documents.findOne({ user: _id });
+  const isDocumentsExist = await Documents.findOne({ user: id });
 
   let result: any;
 
   if (!isDocumentsExist) {
-    result = await Documents.create({ user: _id, ...fileMap });
+    result = await Documents.create({ user: id, ...fileMap });
   }
 
   if (Object.keys(payload).length > 0) {
@@ -251,7 +265,7 @@ const updateOrCreateUserDocuments = async (
   // console.log('query', fileMap);
 
   result = await Documents.findOneAndUpdate(
-    { user: _id },
+    { user: id },
     { $set: fileMap },
     { new: true }
   );
@@ -262,7 +276,15 @@ const updateOrCreateUserDocuments = async (
 const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
   const { _id, role } = user;
 
+  const existingUser = await User.findById(_id);
+
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
   const personalInfo = await PersonalInfo.findOne({ user: _id });
+
+  const sharableLink = `${config.frontend_url.prod}/pro/${_id}`;
 
   let completionPercentage = 0;
 
@@ -330,12 +352,14 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
       $project: {
         email: 1,
         role: 1,
+        status: 1,
         // phone: 1,
         coverImage: 1,
         createdAt: 1,
         updatedAt: 1,
         personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
         professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
+
         documents: { $arrayElemAt: ['$documents', 0] },
         completionPercentage: {
           $cond: {
@@ -349,6 +373,7 @@ const getUserProfile = async (user: Partial<IUser>): Promise<IUser | null> => {
             else: 0,
           },
         },
+        sharableLink: sharableLink,
       },
     },
   ]);
@@ -360,7 +385,7 @@ const getUserById = async (id: string): Promise<IUser | null> => {
   if (!id) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'User id is required');
   }
-
+  const sharableLink = `${config.frontend_url.prod}/pro/${id}`;
   const result = await User.aggregate([
     {
       $match: {
@@ -402,6 +427,58 @@ const getUserById = async (id: string): Promise<IUser | null> => {
         coverImage: 1,
         createdAt: 1,
         updatedAt: 1,
+        status: 1,
+        personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
+        professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
+
+        documents: { $arrayElemAt: ['$documents', 0] },
+        sharableLink: sharableLink,
+      },
+    },
+  ]);
+
+  return result.length > 0 ? result[0] : null;
+};
+const getUsers = async (): Promise<IUser[]> => {
+  const result = await User.aggregate([
+    {
+      $lookup: {
+        from: 'personalinformations',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'personalInfo',
+      },
+    },
+    {
+      $lookup: {
+        from: 'professionalinformations',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'professionalInfo',
+      },
+    },
+    {
+      $lookup: {
+        from: 'documents',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'documents',
+      },
+    },
+    // {
+    //   $sort: { createdAt: -1 },
+    // },
+
+    {
+      $project: {
+        email: 1,
+        name: 1,
+        role: 1,
+        // phone: 1,
+        coverImage: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        status: 1,
         personalInfo: { $arrayElemAt: ['$personalInfo', 0] },
         professionalInfo: { $arrayElemAt: ['$professionalInfo', 0] },
         documents: { $arrayElemAt: ['$documents', 0] },
@@ -409,7 +486,7 @@ const getUserById = async (id: string): Promise<IUser | null> => {
     },
   ]);
 
-  return result.length > 0 ? result[0] : null;
+  return result;
 };
 
 const updateCoverImage = async (
@@ -687,20 +764,25 @@ const uploadOfferDocuments = async (files: any, id: string): Promise<any> => {
 };
 
 const createNotification = async (payload: any): Promise<any> => {
-  const result = await Notification.create(payload);
-
   const user = await User.findById(payload.user);
+  const email = (user?.email as string) || payload.email;
+
+  console.log(email, user, payload);
 
   await sendEmail(
-    user?.email as string,
+    email,
     'Notification',
     `
-      <div>
-        <p>New notification: <strong>${payload.message}</strong></p>
-        <p>Thank you</p>
-      </div>
+    <div>
+    <p>New notification: <strong>${payload.message}</strong></p>
+
+    <p>Thank you</p>
+    </div>
     `
   );
+
+  const result = await Notification.create(payload);
+
   return result;
 };
 
@@ -749,4 +831,6 @@ export const UserService = {
   deleteNotification,
   markAllNotificationsAsRead,
   deleteAccount,
+  getUsers,
+  updateAllUsers,
 };

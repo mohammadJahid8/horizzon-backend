@@ -10,6 +10,7 @@ export type IUser = {
   phone: string;
   image: string;
   isGoogleUser: boolean;
+  status: string;
   otp: string;
   coverImage: string;
   otpExpiry: Date;

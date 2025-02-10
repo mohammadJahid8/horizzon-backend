@@ -27,4 +27,8 @@ exports.default = {
         api_key: process.env.CLOUDINARY_API_KEY,
         api_secret: process.env.CLOUDINARY_API_SECRET,
     },
+    frontend_url: {
+        local: process.env.FRONTEND_URL_LOCAL,
+        prod: process.env.FRONTEND_URL_PROD,
+    },
 };

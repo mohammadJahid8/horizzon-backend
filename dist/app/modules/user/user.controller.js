@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const http_status_1 = __importDefault(require("http-status"));
-const ApiError_1 = __importDefault(require("../../../errors/ApiError"));
 const catchAsync_1 = __importDefault(require("../../../shared/catchAsync"));
 const sendResponse_1 = __importDefault(require("../../../shared/sendResponse"));
 const user_service_1 = require("./user.service");
@@ -37,11 +36,17 @@ const createUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
     });
 }));
 const updateUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const data = JSON.parse(req.body.data || '{}');
-    if (Object.keys(data).length === 0) {
-        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'Data is required');
-    }
-    const result = yield user_service_1.UserService.updateUser(data, req.user);
+    const id = req.params.id;
+    const result = yield user_service_1.UserService.updateUser(req.body, id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'User profile updated successfully!',
+        data: result,
+    });
+}));
+const updateAllUsers = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.updateAllUsers();
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -50,8 +55,11 @@ const updateUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
     });
 }));
 const updateOrCreateUserPersonalInformation = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const data = JSON.parse(req.body.data || '{}');
-    const result = yield user_service_1.UserService.updateOrCreateUserPersonalInformation(data, req.user, req.file);
+    const queryId = req.query.id;
+    const id = queryId ? queryId : (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+    const result = yield user_service_1.UserService.updateOrCreateUserPersonalInformation(data, id, req.file);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -60,9 +68,12 @@ const updateOrCreateUserPersonalInformation = (0, catchAsync_1.default)((req, re
     });
 }));
 const updateOrCreateUserProfessionalInformation = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
     const data = JSON.parse(req.body.data || '{}');
     const files = req.files;
-    const result = yield user_service_1.UserService.updateOrCreateUserProfessionalInformation(data, req.user, files);
+    const queryId = req.query.id;
+    const id = queryId ? queryId : (_b = req.user) === null || _b === void 0 ? void 0 : _b._id;
+    const result = yield user_service_1.UserService.updateOrCreateUserProfessionalInformation(data, id, files);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -71,9 +82,12 @@ const updateOrCreateUserProfessionalInformation = (0, catchAsync_1.default)((req
     });
 }));
 const updateOrCreateUserDocuments = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
     const files = req.files;
     const payload = JSON.parse(req.body.data || '{}');
-    const result = yield user_service_1.UserService.updateOrCreateUserDocuments(req.user, files, payload);
+    const queryId = req.query.id;
+    const id = queryId ? queryId : (_c = req.user) === null || _c === void 0 ? void 0 : _c._id;
+    const result = yield user_service_1.UserService.updateOrCreateUserDocuments(id, files, payload);
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -83,6 +97,15 @@ const updateOrCreateUserDocuments = (0, catchAsync_1.default)((req, res) => __aw
 }));
 const getUserProfile = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield user_service_1.UserService.getUserProfile(req.user);
+    (0, sendResponse_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'User profile retrieved successfully!',
+        data: result,
+    });
+}));
+const getUsers = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield user_service_1.UserService.getUsers();
     (0, sendResponse_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -249,4 +272,6 @@ exports.UserController = {
     deleteNotification,
     markAllNotificationsAsRead,
     deleteAccount,
+    getUsers,
+    updateAllUsers,
 };
