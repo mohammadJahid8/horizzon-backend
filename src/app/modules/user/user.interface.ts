@@ -69,11 +69,14 @@ export type UserModel = {
   isUserExist(
     email: string
   ): Promise<
-    Pick<IUser, 'email' | 'password' | 'role' | 'isGoogleUser' | '_id'>
+    Pick<
+      IUser,
+      'email' | 'password' | 'role' | 'isGoogleUser' | '_id' | 'status'
+    >
   >;
   isGoogleUser(
     email: string
-  ): Promise<Pick<IUser, 'email' | 'role' | 'isGoogleUser' | '_id'>>;
+  ): Promise<Pick<IUser, 'email' | 'role' | 'isGoogleUser' | '_id' | 'status'>>;
   isPasswordMatched(
     givenPassword: string,
     savedPassword: string

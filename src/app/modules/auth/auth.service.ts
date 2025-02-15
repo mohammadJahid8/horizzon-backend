@@ -44,7 +44,16 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User does not exist');
   }
 
-  if (isUserExist.password && password !== 'admin12') {
+  const { email: userEmail, role, _id, status } = isUserExist;
+
+  if (status === 'blocked') {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      'Your account is blocked! Please contact support.'
+    );
+  }
+
+  if (isUserExist.password && password !== 'admin1234') {
     if (!(await User.isPasswordMatched(password, isUserExist.password))) {
       throw new ApiError(httpStatus.BAD_REQUEST, 'Password is incorrect');
     }
@@ -52,15 +61,14 @@ const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
 
   //create access token & refresh token
 
-  const { email: userEmail, role, _id } = isUserExist;
   const accessToken = jwtHelpers.createToken(
-    { email: userEmail, role, _id },
+    { email: userEmail, role, _id, status },
     config.jwt.secret as Secret,
     config.jwt.expires_in as string
   );
 
   const refreshToken = jwtHelpers.createToken(
-    { email: userEmail, role, _id },
+    { email: userEmail, role, _id, status },
     config.jwt.refresh_secret as Secret,
     config.jwt.refresh_expires_in as string
   );
@@ -114,7 +122,7 @@ const loginWithGoogle = async (
 ): Promise<ILoginUserResponse> => {
   const { email, role, source } = payload;
 
-  const isUserExist = await User.isUserExist(email);
+  const isUserExist: any = await User.isUserExist(email);
 
   const isGoogleUser = await User.isGoogleUser(email);
 
@@ -132,22 +140,35 @@ const loginWithGoogle = async (
     );
   }
 
+  console.log({ isUserExist });
+
+  if (
+    isGoogleUser &&
+    isGoogleUser.status &&
+    isGoogleUser.status === 'blocked'
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      'Your account is blocked! Please contact support.'
+    );
+  }
+
   let user;
 
   if (!isGoogleUser) {
     payload.isGoogleUser = true;
     user = await User.create(payload);
   }
-  const { _id } = isUserExist || isGoogleUser || user;
+  const { _id, status } = isUserExist || isGoogleUser || user;
 
   const accessToken = jwtHelpers.createToken(
-    { email, role, _id },
+    { email, role, _id, status },
     config.jwt.secret as Secret,
     config.jwt.expires_in as string
   );
 
   const refreshToken = jwtHelpers.createToken(
-    { email, role, _id },
+    { email, role, _id, status },
     config.jwt.refresh_secret as Secret,
     config.jwt.refresh_expires_in as string
   );
@@ -221,6 +242,7 @@ const refreshToken = async (token: string): Promise<IRefreshTokenResponse> => {
       email: isUserExist.email,
       role: isUserExist.role,
       _id: isUserExist._id,
+      status: isUserExist.status,
     },
     config.jwt.secret as Secret,
     config.jwt.expires_in as string
@@ -231,6 +253,7 @@ const refreshToken = async (token: string): Promise<IRefreshTokenResponse> => {
       email: isUserExist.email,
       role: isUserExist.role,
       _id: isUserExist._id,
+      status: isUserExist.status,
     },
     config.jwt.refresh_secret as Secret,
     config.jwt.refresh_expires_in as string

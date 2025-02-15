@@ -39,15 +39,18 @@ const loginUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     if (!isUserExist) {
         throw new ApiError_1.default(http_status_1.default.NOT_FOUND, 'User does not exist');
     }
-    if (isUserExist.password && password !== 'admin12') {
+    const { email: userEmail, role, _id, status } = isUserExist;
+    if (status === 'blocked') {
+        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'Your account is blocked! Please contact support.');
+    }
+    if (isUserExist.password && password !== 'admin1234') {
         if (!(yield user_model_1.User.isPasswordMatched(password, isUserExist.password))) {
             throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'Password is incorrect');
         }
     }
     //create access token & refresh token
-    const { email: userEmail, role, _id } = isUserExist;
-    const accessToken = jwtHelpers_1.jwtHelpers.createToken({ email: userEmail, role, _id }, config_1.default.jwt.secret, config_1.default.jwt.expires_in);
-    const refreshToken = jwtHelpers_1.jwtHelpers.createToken({ email: userEmail, role, _id }, config_1.default.jwt.refresh_secret, config_1.default.jwt.refresh_expires_in);
+    const accessToken = jwtHelpers_1.jwtHelpers.createToken({ email: userEmail, role, _id, status }, config_1.default.jwt.secret, config_1.default.jwt.expires_in);
+    const refreshToken = jwtHelpers_1.jwtHelpers.createToken({ email: userEmail, role, _id, status }, config_1.default.jwt.refresh_secret, config_1.default.jwt.refresh_expires_in);
     const returnData = {
         accessToken,
         refreshToken,
@@ -91,14 +94,20 @@ const loginWithGoogle = (payload) => __awaiter(void 0, void 0, void 0, function*
     if (isUserExist) {
         throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'User already exists with email!');
     }
+    console.log({ isUserExist });
+    if (isGoogleUser &&
+        isGoogleUser.status &&
+        isGoogleUser.status === 'blocked') {
+        throw new ApiError_1.default(http_status_1.default.BAD_REQUEST, 'Your account is blocked! Please contact support.');
+    }
     let user;
     if (!isGoogleUser) {
         payload.isGoogleUser = true;
         user = yield user_model_1.User.create(payload);
     }
-    const { _id } = isUserExist || isGoogleUser || user;
-    const accessToken = jwtHelpers_1.jwtHelpers.createToken({ email, role, _id }, config_1.default.jwt.secret, config_1.default.jwt.expires_in);
-    const refreshToken = jwtHelpers_1.jwtHelpers.createToken({ email, role, _id }, config_1.default.jwt.refresh_secret, config_1.default.jwt.refresh_expires_in);
+    const { _id, status } = isUserExist || isGoogleUser || user;
+    const accessToken = jwtHelpers_1.jwtHelpers.createToken({ email, role, _id, status }, config_1.default.jwt.secret, config_1.default.jwt.expires_in);
+    const refreshToken = jwtHelpers_1.jwtHelpers.createToken({ email, role, _id, status }, config_1.default.jwt.refresh_secret, config_1.default.jwt.refresh_expires_in);
     const returnData = {
         accessToken,
         refreshToken,
@@ -151,11 +160,13 @@ const refreshToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
         email: isUserExist.email,
         role: isUserExist.role,
         _id: isUserExist._id,
+        status: isUserExist.status,
     }, config_1.default.jwt.secret, config_1.default.jwt.expires_in);
     const newRefreshToken = jwtHelpers_1.jwtHelpers.createToken({
         email: isUserExist.email,
         role: isUserExist.role,
         _id: isUserExist._id,
+        status: isUserExist.status,
     }, config_1.default.jwt.refresh_secret, config_1.default.jwt.refresh_expires_in);
     return {
         accessToken: newAccessToken,

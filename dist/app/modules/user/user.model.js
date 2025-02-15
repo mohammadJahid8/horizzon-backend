@@ -65,12 +65,12 @@ const UserSchema = new mongoose_1.Schema({
 });
 UserSchema.statics.isUserExist = function (email) {
     return __awaiter(this, void 0, void 0, function* () {
-        return yield exports.User.findOne({ email, isGoogleUser: false }, { email: 1, password: 1, role: 1, _id: 1 });
+        return yield exports.User.findOne({ email, isGoogleUser: false }, { email: 1, password: 1, role: 1, _id: 1, status: 1 });
     });
 };
 UserSchema.statics.isGoogleUser = function (email) {
     return __awaiter(this, void 0, void 0, function* () {
-        return yield exports.User.findOne({ email, isGoogleUser: true }, { email: 1, role: 1, _id: 1 });
+        return yield exports.User.findOne({ email, isGoogleUser: true }, { email: 1, role: 1, _id: 1, status: 1 });
     });
 };
 UserSchema.statics.isPasswordMatched = function (givenPassword, savedPassword) {

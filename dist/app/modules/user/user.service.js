@@ -171,7 +171,6 @@ const updateOrCreateUserProfessionalInformation = (payload, id, files) => __awai
 });
 const updateOrCreateUserDocuments = (id, files, payload) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f;
-    console.log('iddd', id);
     let fileMap = {};
     if ((_b = (_a = files === null || files === void 0 ? void 0 : files.certificate) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.path) {
         fileMap.certificate = files.certificate[0].path;
