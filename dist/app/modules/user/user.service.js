@@ -209,6 +209,8 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
     const personalInfo = yield personal_info_model_1.PersonalInfo.findOne({ user: _id });
     const sharableLink = `${config_1.default.frontend_url.prod}/pro/${_id}`;
     let completionPercentage = 0;
+    let offersSent = 0;
+    let jobConversionPercentage = 0;
     if (role === user_1.ENUM_USER_ROLE.PRO) {
         const professionalInfo = yield professional_info_model_1.ProfessionalInfo.findOne({ user: _id });
         const documents = yield documents_model_1.Documents.findOne({ user: _id });
@@ -233,6 +235,13 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
             'address',
         ];
         completionPercentage = (0, calculatePartnerPercentage_1.calculatePartnerPercentage)(fields, personalInfo);
+        offersSent = yield offer_model_1.Offer.countDocuments({ partner: _id });
+        const acceptedOffers = yield offer_model_1.Offer.countDocuments({
+            partner: _id,
+            status: 'accepted',
+        });
+        const jobConversion = (acceptedOffers / offersSent) * 100 || 0;
+        jobConversionPercentage = Number(jobConversion.toFixed(2));
     }
     const result = yield user_model_1.User.aggregate([
         {
@@ -290,6 +299,20 @@ const getUserProfile = (user) => __awaiter(void 0, void 0, void 0, function* () 
                     },
                 },
                 sharableLink: sharableLink,
+                offersSent: {
+                    $cond: {
+                        if: { $eq: [role, user_1.ENUM_USER_ROLE.PARTNER] },
+                        then: offersSent,
+                        else: 0,
+                    },
+                },
+                jobConversionPercentage: {
+                    $cond: {
+                        if: { $eq: [role, user_1.ENUM_USER_ROLE.PARTNER] },
+                        then: jobConversionPercentage,
+                        else: 0,
+                    },
+                },
             },
         },
     ]);
